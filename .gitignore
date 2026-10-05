@@ -1,0 +1,7 @@
+.build/
+build/
+snaps/
+shots/
+Resources/icon/Cue.iconset/
+google-oauth.json
+.DS_Store

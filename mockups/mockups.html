@@ -1,0 +1,619 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cue mockups</title>
+<style>
+  :root {
+    --blue: #0a84ff; --purple: #bf5af2; --orange: #ff9f0a; --green: #30d158; --red: #ff3b30; --teal: #40c8e0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; overflow: hidden; }
+  body { font-family: "SF Pro Text", -apple-system, system-ui; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 0; background: #e9eaee; }
+  .board { display: none; width: 1600px; height: 720px; position: relative; }
+  .board.states { height: 440px; }
+  #alert.board { height: 400px; }
+  .board.on { display: flex; }
+  .num { font-variant-numeric: tabular-nums; }
+  .rounded { font-family: "SF Pro Rounded", "SF Pro Text", system-ui; }
+
+  /* ---------- desktop + menu bar ---------- */
+  .desk { flex: 1; height: 100%; position: relative; overflow: hidden; }
+  .desk.light {
+    background:
+      radial-gradient(120% 90% at 85% 0%, #cfe3ff 0%, transparent 55%),
+      radial-gradient(90% 80% at 0% 100%, #f6d9e8 0%, transparent 60%),
+      radial-gradient(80% 70% at 100% 100%, #d7f0ea 0%, transparent 60%),
+      #eef1f7;
+    --fg: rgba(0,0,0,.86); --fg2: rgba(0,0,0,.52); --fg3: rgba(0,0,0,.28); --fg4: rgba(0,0,0,.08);
+    --glass: rgba(250,250,252,.70); --glass-edge: rgba(255,255,255,.75); --glass-line: rgba(0,0,0,.10);
+    --hl: rgba(0,0,0,.055); --sep: rgba(0,0,0,.09); --mb: rgba(0,0,0,.85);
+  }
+  .desk.dark {
+    background:
+      radial-gradient(120% 90% at 85% 0%, #1d3a6b 0%, transparent 55%),
+      radial-gradient(90% 80% at 0% 100%, #3b1d4a 0%, transparent 60%),
+      radial-gradient(80% 70% at 100% 100%, #0f3b3a 0%, transparent 60%),
+      #10131c;
+    --fg: rgba(255,255,255,.90); --fg2: rgba(255,255,255,.55); --fg3: rgba(255,255,255,.28); --fg4: rgba(255,255,255,.08);
+    --glass: rgba(38,40,48,.62); --glass-edge: rgba(255,255,255,.16); --glass-line: rgba(0,0,0,.5);
+    --hl: rgba(255,255,255,.07); --sep: rgba(255,255,255,.10); --mb: rgba(255,255,255,.92);
+  }
+  .menubar {
+    height: 30px; display: flex; align-items: center; padding: 0 14px; gap: 18px;
+    color: var(--mb); font-size: 13px; font-weight: 500;
+  }
+  .menubar .apple { font-size: 15px; margin-right: 2px; }
+  .menubar .app { font-weight: 700; }
+  .menubar .spacer { flex: 1; }
+  .menubar svg { display: block; }
+  .mbi { display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 7px; border-radius: 6px; }
+  .mbi.active { background: var(--fg4); background: color-mix(in srgb, var(--mb) 16%, transparent); }
+
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(40px) saturate(190%); -webkit-backdrop-filter: blur(40px) saturate(190%);
+    box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-line), 0 18px 50px rgba(0,0,0,.22), 0 2px 8px rgba(0,0,0,.08);
+    color: var(--fg);
+  }
+
+  /* ---------- direction A: native menu ---------- */
+  .menu { position: absolute; top: 34px; width: 290px; border-radius: 14px; padding: 6px; font-size: 13px; }
+  .menu .row { display: flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 7px; gap: 8px; }
+  .menu .row .t { width: 38px; color: var(--fg2); }
+  .menu .row .title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .menu .row .kbd { color: var(--fg3); }
+  .menu .row.past { color: var(--fg3); }
+  .menu .row.past .t { color: var(--fg3); }
+  .menu .row.sel { background: var(--blue); color: white; }
+  .menu .row.sel .t, .menu .row.sel .kbd { color: rgba(255,255,255,.8); }
+  .menu .hdr { font-size: 11px; font-weight: 600; color: var(--fg2); padding: 8px 10px 3px; }
+  .menu .sep { height: 1px; background: var(--sep); margin: 5px 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .menu .join { height: 30px; font-weight: 600; }
+  .menu .sub { font-weight: 400; color: var(--fg2); }
+
+  /* ---------- direction B: glance popover ---------- */
+  .pop { position: absolute; top: 34px; width: 340px; border-radius: 20px; padding: 16px 0 6px; }
+  .hero { display: flex; align-items: center; padding: 0 16px 14px; gap: 12px; }
+  .hero .when { font-size: 13px; font-weight: 600; color: var(--blue); }
+  .hero .what { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; margin-top: 2px; }
+  .hero .meta { font-size: 12px; color: var(--fg2); margin-top: 3px; display: flex; gap: 6px; align-items: center; }
+  .hero .grow { flex: 1; min-width: 0; }
+  .btn-join {
+    display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 16px;
+    background: var(--blue); color: white; font-size: 13px; font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 3px rgba(10,132,255,.35);
+  }
+  .ribbon { margin: 0 16px; position: relative; height: 40px; }
+  .ribbon .track { position: absolute; left: 0; right: 0; top: 0; height: 18px; border-radius: 6px; background: var(--fg4); }
+  .ribbon .ev { position: absolute; top: 0; height: 18px; border-radius: 5px; }
+  .ribbon .ev.past { opacity: .35; }
+  .ribbon .now { position: absolute; top: -4px; height: 26px; width: 2px; margin-left: -1px; background: var(--red); border-radius: 1px; }
+  .ribbon .now::before { content: ""; position: absolute; top: -3px; left: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  .ribbon .hr { position: absolute; top: 23px; font-size: 10px; color: var(--fg3); transform: translateX(-50%); }
+  .list { padding: 2px 6px 0; }
+  .list .hdr { font-size: 12px; font-weight: 600; color: var(--fg2); padding: 10px 10px 4px; }
+  .list .row { display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 10px; border-radius: 9px; font-size: 13px; }
+  .list .row.hov { background: var(--hl); }
+  .list .bar { width: 3px; height: 16px; border-radius: 2px; flex: none; }
+  .list .t { width: 40px; color: var(--fg2); flex: none; }
+  .list .title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .list .cam { color: var(--fg3); }
+  .list .row.hov .cam { color: var(--blue); }
+  .foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--sep); margin: 8px 0 0; padding: 6px 6px 0; }
+  .foot .row { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border-radius: 8px; font-size: 13px; color: var(--fg2); }
+
+  /* ---------- annotations ---------- */
+  .note { position: absolute; font-size: 13px; line-height: 1.45; color: var(--fg2); width: 240px; }
+  .note b { color: var(--fg); font-weight: 600; display: block; margin-bottom: 2px; font-size: 14px; }
+  .tag { position: absolute; left: 24px; bottom: 22px; font-size: 13px; color: var(--fg2); }
+  .tag b { color: var(--fg); font-weight: 600; }
+
+  /* ---------- states board ---------- */
+  .states { flex-direction: column; }
+  .states .desk { flex: 1; padding: 28px 40px; }
+  .states h2 { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 18px; }
+  .stgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
+  .st .strip { height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 12px; color: var(--mb); font-size: 13px; font-weight: 500; background: color-mix(in srgb, var(--mb) 6%, transparent); box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--mb) 10%, transparent); }
+  .st .cap { margin-top: 10px; font-size: 13px; color: var(--fg); font-weight: 600; }
+  .st .cap span { display: block; font-weight: 400; color: var(--fg2); margin-top: 2px; line-height: 1.4; }
+  .pill { display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px 0 7px; border-radius: 11px; background: var(--blue); color: white; font-weight: 600; }
+
+  /* ---------- alert ---------- */
+  .alert { position: absolute; top: 46px; left: 50%; transform: translateX(-50%); width: 420px; border-radius: 22px; padding: 16px; display: flex; gap: 14px; align-items: center; }
+  .alert .ring { flex: none; }
+  .alert .grow { flex: 1; min-width: 0; }
+  .alert .k { font-size: 12px; font-weight: 600; color: var(--red); }
+  .alert .ti { font-size: 15px; font-weight: 600; margin-top: 1px; }
+  .alert .me { font-size: 12px; color: var(--fg2); margin-top: 2px; }
+  .alert .acts { display: flex; flex-direction: column; gap: 6px; }
+  .btn-sec { height: 28px; padding: 0 12px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--fg); background: var(--fg4); }
+  .alert .btn-join { height: 28px; justify-content: center; }
+  .win { position: absolute; left: 80px; right: 80px; top: 150px; bottom: 90px; border-radius: 16px; background: color-mix(in srgb, var(--glass) 60%, transparent); box-shadow: 0 0 0 0.5px var(--glass-line), 0 30px 80px rgba(0,0,0,.18); opacity: .55; }
+
+  /* ---------- big alert + mini ---------- */
+  .board.tall { height: 1000px; }
+  .board.short { height: 440px; }
+  .appwin { position: absolute; left: 110px; right: 110px; top: 62px; bottom: 48px; border-radius: 16px; overflow: hidden; display: flex;
+    box-shadow: 0 0 0 0.5px var(--glass-line), 0 30px 80px rgba(0,0,0,.22); }
+  .light .appwin { background: #fbfbfc; } .dark .appwin { background: #1d1e23; }
+  .appwin .side { width: 230px; padding: 46px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .light .appwin .side { background: #f0f0f3; } .dark .appwin .side { background: #18191d; }
+  .appwin .lights { position: absolute; top: 16px; left: 18px; display: flex; gap: 8px; }
+  .appwin .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .appwin .main { flex: 1; padding: 52px 40px; display: flex; flex-direction: column; gap: 26px; }
+  .ph { height: 10px; border-radius: 5px; background: var(--fg4); }
+  .msg { display: flex; gap: 14px; } .msg .av { width: 36px; height: 36px; border-radius: 9px; background: var(--fg4); flex: none; }
+  .msg .lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 3px; }
+
+  .scrim { position: absolute; inset: 30px 0 0 0; backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
+  .light .scrim { background: rgba(240,242,248,.35); } .dark .scrim { background: rgba(8,10,16,.45); }
+  .big { position: absolute; left: 10%; right: 10%; top: calc(30px + 6%); bottom: 6%; border-radius: 34px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .light .big { --glass: rgba(252,252,254,.78); } .dark .big { --glass: rgba(34,36,44,.72); }
+  .big .min { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; }
+  .chip { height: 30px; min-width: 30px; padding: 0 10px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--fg2); background: var(--fg4); }
+  .big .cal { position: absolute; top: 26px; left: 30px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg2); }
+  .bigring { position: relative; width: 210px; height: 210px; }
+  .bigring .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .bigring .n { font-family: "SF Pro Rounded"; font-size: 64px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .bigring .l { font-size: 14px; color: var(--fg2); margin-top: 6px; }
+  .big h1 { font-family: "SF Pro Display"; font-size: 46px; font-weight: 600; letter-spacing: -0.8px; margin-top: 34px; }
+  .big .bmeta { display: flex; align-items: center; gap: 22px; font-size: 17px; color: var(--fg2); margin-top: 12px; }
+  .big .bmeta span { display: flex; align-items: center; gap: 7px; }
+  .people { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 14px; color: var(--fg2); }
+  .people .avs { display: flex; } .people .avs i { width: 30px; height: 30px; border-radius: 50%; margin-left: 5px; display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 600; color: white; box-shadow: 0 0 0 2px var(--ring-bg); }
+  .light .people { --ring-bg: #f7f7fa; } .dark .people { --ring-bg: #2a2c34; }
+  .people .avs i:first-child { margin-left: 0; }
+  .bacts { display: flex; gap: 12px; margin-top: 40px; align-items: center; }
+  .bacts .btn-join { height: 50px; padding: 0 28px; border-radius: 25px; font-size: 17px; gap: 10px; }
+  .bacts .btn-join kbd, .bacts .btn-sec kbd { font: 500 12px "SF Pro Text"; padding: 2px 7px; border-radius: 6px; }
+  .bacts .btn-join kbd { background: rgba(255,255,255,.22); }
+  .bacts .btn-sec { height: 50px; padding: 0 22px; border-radius: 25px; font-size: 15px; gap: 10px; }
+  .bacts .btn-sec kbd { background: var(--fg4); color: var(--fg2); }
+  .big .hint { position: absolute; bottom: 24px; font-size: 13px; color: var(--fg3); }
+
+  .mini { position: absolute; top: 40px; right: 14px; width: 340px; border-radius: 20px; padding: 12px 12px 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .light .mini { --glass: rgba(252,252,254,.80); } .dark .mini { --glass: rgba(40,42,50,.74); }
+  .mini .r { position: relative; width: 36px; height: 36px; flex: none; }
+  .mini .r span { position: absolute; inset: 0; display: grid; place-items: center; font: 600 11px "SF Pro Rounded"; }
+  .mini .grow { flex: 1; min-width: 0; }
+  .mini .k { font-size: 11px; font-weight: 600; }
+  .mini .ti { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .mini .su { font-size: 11px; color: var(--fg2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini .btn-join, .mini .btn-sec { height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12px; flex: none; }
+  .mini .x { position: absolute; top: -7px; left: -7px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; color: var(--fg2); }
+  .mini.static { position: relative; top: auto; right: auto; }
+  .ghost { position: absolute; left: 10%; right: 10%; top: calc(30px + 6%); bottom: 6%; border-radius: 34px; border: 2px dashed color-mix(in srgb, var(--blue) 55%, transparent); }
+  .ghost-arrow { position: absolute; }
+  .mstates { flex-direction: column; } .mstates .desk { padding: 28px 40px; }
+  .mstates h2 { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 18px; }
+  .mgrid { display: grid; grid-template-columns: repeat(3, 360px); gap: 40px; }
+  .mgrid .cap { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--fg); }
+  .mgrid .cap span { display: block; font-weight: 400; color: var(--fg2); margin-top: 2px; line-height: 1.4; }
+
+  /* ---------- compose / edit ---------- */
+  .board.mid { height: 800px; }
+  .pop.wide { width: 360px; }
+  .nl { margin: 0 12px; padding: 0 12px; height: 40px; line-height: 40px; white-space: nowrap; overflow: hidden; border-radius: 12px; display: block; font-size: 15px; background: var(--fg4); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--blue) 65%, transparent); }
+  .nl .tok { color: var(--blue); }
+  .caret { display: inline-block; vertical-align: -3px; width: 1.5px; height: 18px; background: var(--blue); margin-left: 1px; border-radius: 1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 12px; }
+  .chip2 { height: 24px; padding: 0 9px 0 7px; border-radius: 12px; display: flex; align-items: center; gap: 5px; font-size: 12px; background: var(--fg4); color: var(--fg); }
+  .chip2 svg { color: var(--fg2); }
+  .chip2 .av { width: 16px; height: 16px; border-radius: 50%; font-size: 8px; font-weight: 700; color: #fff; display: grid; place-items: center; }
+  .chip2.add { background: transparent; color: var(--fg2); box-shadow: inset 0 0 0 1px var(--sep); }
+  .sub { font-size: 12px; font-weight: 600; color: var(--fg2); padding: 0 16px 6px; display: flex; justify-content: space-between; }
+  .sub span { font-weight: 400; color: var(--fg3); }
+  .lanes { margin: 0 16px; position: relative; }
+  .lane { display: flex; align-items: center; gap: 8px; height: 22px; margin-bottom: 6px; }
+  .lane .who { width: 40px; font-size: 11px; color: var(--fg2); flex: none; }
+  .lane .tr { position: relative; flex: 1; height: 16px; border-radius: 5px; background: var(--fg4); }
+  .lane .ev { position: absolute; top: 0; height: 16px; border-radius: 4px; }
+  .lane .busy { position: absolute; top: 0; height: 16px; border-radius: 4px; background: repeating-linear-gradient(135deg, var(--c) 0 2.5px, transparent 2.5px 6px); box-shadow: inset 0 0 0 1px var(--c); opacity: .75; }
+  .lanes .free { position: absolute; top: -4px; bottom: 18px; border-radius: 6px; background: color-mix(in srgb, var(--green) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 50%, transparent); }
+  .lanes .ghost2 { position: absolute; top: -4px; bottom: 18px; border-radius: 6px; border: 1.5px dashed var(--blue); background: color-mix(in srgb, var(--blue) 14%, transparent); }
+  .lanes .ghost2.bad { border-color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
+  .lanes .hrs { position: relative; height: 14px; margin-left: 48px; }
+  .lanes .hrs i { position: absolute; font-style: normal; font-size: 10px; color: var(--fg3); transform: translateX(-50%); }
+  .hint { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--fg2); padding: 10px 16px 2px; }
+  .hint .d { width: 7px; height: 7px; border-radius: 50%; }
+  .slot { height: 24px; padding: 0 10px; border-radius: 12px; display: flex; align-items: center; font-size: 12px; font-weight: 600; color: var(--blue); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent); }
+  .slot.on { background: var(--blue); color: #fff; box-shadow: none; }
+  .actions { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 10px; }
+  .actions .left { font-size: 12px; color: var(--fg3); display: flex; align-items: center; gap: 6px; }
+  .actions .right { display: flex; gap: 8px; }
+  .btn-sec.s, .btn-join.s { height: 30px; padding: 0 14px; border-radius: 15px; font-size: 13px; }
+  .k2 { font-size: 11px; opacity: .75; margin-left: 4px; font-weight: 500; }
+  .foot .row.plus { color: var(--blue); font-weight: 500; }
+
+  .dtop { display: flex; align-items: center; justify-content: space-between; padding: 0 10px 8px; }
+  .dtop .back { display: flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px 0 4px; border-radius: 8px; font-size: 13px; color: var(--blue); }
+  .dtop .more { width: 28px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: var(--fg2); }
+  .dt { padding: 0 16px; }
+  .dt .calname { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fg2); }
+  .dt h3 { font-size: 19px; font-weight: 600; letter-spacing: -.3px; margin-top: 4px; }
+  .dt .tline { font-size: 13px; color: var(--fg2); margin-top: 4px; }
+  .field { border-radius: 9px; background: var(--fg4); padding: 0 10px; height: 34px; display: flex; align-items: center; font-size: 13px; }
+  .field.focus { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--blue) 65%, transparent); }
+  .field.ttl { font-size: 17px; font-weight: 600; height: 40px; letter-spacing: -.2px; }
+  .trow { display: flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--fg2); }
+  .trow .field { height: 30px; padding: 0 10px; color: var(--fg); }
+  .rsvp { display: flex; align-items: center; justify-content: space-between; margin: 14px 16px 0; }
+  .rsvp .lbl { font-size: 13px; color: var(--fg2); }
+  .seg { display: flex; padding: 2px; border-radius: 9px; background: var(--fg4); }
+  .seg span { height: 24px; padding: 0 12px; border-radius: 7px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; color: var(--fg2); }
+  .seg span.on { background: var(--glass-edge); background: color-mix(in srgb, var(--blue) 18%, transparent); color: var(--blue); }
+  .ppl { margin: 12px 8px 0; }
+  .ppl .p { display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 8px; font-size: 13px; }
+  .ppl .p .av { width: 22px; height: 22px; border-radius: 50%; font-size: 9px; font-weight: 700; color: #fff; display: grid; place-items: center; position: relative; flex: none; }
+  .ppl .p .av b { position: absolute; right: -2px; bottom: -2px; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1.5px var(--glassbg); font-size: 0; }
+  .ppl .p .role { margin-left: auto; font-size: 12px; color: var(--fg3); }
+  .notes { margin: 10px 16px 0; font-size: 12.5px; line-height: 1.45; color: var(--fg2); }
+  .notes.field { height: auto; padding: 8px 10px; display: block; color: var(--fg); }
+  .light { --glassbg: #f7f7f9; } .dark { --glassbg: #2a2c33; }
+  .dact { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--sep); margin-top: 14px; padding: 8px 10px 2px; }
+  .dact .row { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: 8px; font-size: 13px; color: var(--fg2); }
+  .dact .row.del { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- reusable SVG bits -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="cam" viewBox="0 0 16 16"><rect x="1.5" y="4" width="9" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 7l4-2.2v6.4l-4-2.2z" fill="currentColor"/></symbol>
+    <symbol id="cal" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 6.5h11" stroke="currentColor" stroke-width="1.4"/><path d="M5 1.8v2.4M11 1.8v2.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="wifi" viewBox="0 0 18 14"><path d="M1.5 5a11 11 0 0 1 15 0M4 7.7a7.3 7.3 0 0 1 10 0M6.5 10.3a3.6 3.6 0 0 1 5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="12.4" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="batt" viewBox="0 0 26 13"><rect x=".75" y=".75" width="21.5" height="11.5" rx="3.2" fill="none" stroke="currentColor" stroke-opacity=".5" stroke-width="1.2"/><rect x="2.6" y="2.6" width="14" height="7.8" rx="1.8" fill="currentColor"/><path d="M23.8 4.5v4" stroke="currentColor" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="cc" viewBox="0 0 16 14"><rect x="1" y="1.5" width="14" height="4.5" rx="2.25" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="12.5" cy="3.75" r="1.3" fill="currentColor"/><rect x="1" y="8" width="14" height="4.5" rx="2.25" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="3.5" cy="10.25" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="search" viewBox="0 0 16 16"><circle cx="6.8" cy="6.8" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.3 10.3l3.8 3.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+
+    <symbol id="clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.6V8l2.3 1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="chev" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8 10 12.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="dots" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="arrow" viewBox="0 0 16 16"><path d="M5 11l6-6M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<template id="tpl-menubar">
+  <div class="menubar">
+    <svg width="14" height="16" viewBox="0 0 814 1000" style="margin-right:2px"><path fill="currentColor" d="M788 341c-6 4-108 62-108 190 0 148 130 200 134 202-1 3-21 72-69 142-43 62-88 124-156 124s-86-40-164-40c-77 0-104 41-167 41s-106-57-156-127C45 791 0 668 0 551 0 364 122 264 241 264c64 0 117 42 157 42 38 0 98-45 171-45 28 0 128 3 194 80zM554 159c30-35 51-84 51-133 0-7-1-14-2-19-48 2-106 32-140 73-27 31-53 80-53 130 0 8 1 15 2 18 3 1 9 2 14 2 43 0 97-29 128-71z"/></svg><span class="app">Slack</span><span>File</span><span>Edit</span><span>View</span><span>Window</span><span>Help</span>
+    <span class="spacer"></span>
+    <svg width="16" height="16"><use href="#search"/></svg>
+    <span class="cue-slot"></span>
+    <svg width="18" height="14"><use href="#wifi"/></svg>
+    <svg width="26" height="13"><use href="#batt"/></svg>
+    <svg width="16" height="14"><use href="#cc"/></svg>
+    <span class="num">Mon 5 Oct&nbsp; 10:18</span>
+  </div>
+</template>
+
+<!-- ====================== BOARD 1: menu bar states ====================== -->
+<section class="board states" id="states">
+  <div class="desk light"><h2>Menu bar, light</h2><div class="stgrid" data-states></div></div>
+  <div class="desk dark"><h2>Menu bar, dark</h2><div class="stgrid" data-states></div></div>
+</section>
+
+<!-- ====================== BOARD 2: direction A ====================== -->
+<section class="board" id="menu">
+  <div class="desk light" data-mb="upcoming">
+    <div class="menu glass" style="right:178px" data-menu></div>
+    <div class="note" style="left:60px; top:120px"><b>Direction A: a plain menu</b>A standard macOS menu and nothing else. Join is the first item, today’s and tomorrow’s meetings follow. It opens instantly and every row works from the keyboard.</div>
+  </div>
+  <div class="desk dark" data-mb="upcoming">
+    <div class="menu glass" style="right:178px" data-menu data-sel="3"></div>
+  </div>
+</section>
+
+<!-- ====================== BOARD 3: direction B ====================== -->
+<section class="board" id="glance">
+  <div class="desk light" data-mb="upcoming">
+    <div class="pop glass" style="right:150px" data-pop></div>
+    <div class="note" style="left:60px; top:120px"><b>Direction B: glance</b>What’s next and a Join button at the top. The ribbon below shows your whole day from 8 to 8, with a red line for now, so gaps and back-to-backs stand out.</div>
+  </div>
+  <div class="desk dark" data-mb="upcoming">
+    <div class="pop glass" style="right:150px" data-pop data-hov="3"></div>
+  </div>
+</section>
+
+
+<!-- ====================== BOARD 5/6: big alert ====================== -->
+<section class="board tall" id="full"><div class="desk light" data-mb="now" data-big></div></section>
+<section class="board tall" id="fulldark"><div class="desk dark" data-mb="now" data-big></div></section>
+
+<!-- ====================== BOARD 7: minimized ====================== -->
+<section class="board tall" id="mini"><div class="desk light" data-mb="during" data-minidesk></div></section>
+
+<!-- ====================== BOARD 8: mini states ====================== -->
+<section class="board short mstates" id="ministates">
+  <div class="desk light"><h2>Mini window, light</h2><div class="mgrid" data-mgrid></div></div>
+  <div class="desk dark"><h2>Mini window, dark</h2><div class="mgrid" data-mgrid></div></div>
+</section>
+
+
+<!-- ====================== EDIT BOARDS ====================== -->
+<section class="board mid" id="compose">
+  <div class="desk light" data-mb="upcomingIdle"><div class="pop wide glass" style="right:130px" data-compose="conflict"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Add an event by typing</b>Type it the way you’d say it. Cue tints the parts it understood and turns them into chips you can click to change. The ribbon previews the slot on your day, with each person’s busy time striped in their colour. If someone’s busy, it offers the nearest free slots.</div></div>
+  <div class="desk dark" data-mb="upcomingIdle"><div class="pop wide glass" style="right:130px" data-compose="ok"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Pick a slot and create</b>Click a suggested time or a chip to adjust it. ⌘↩ creates the event and sends the invites. A Google Meet link is added unless you turn it off.</div></div>
+</section>
+
+<section class="board mid" id="findtime">
+  <div class="desk light" data-mb="upcomingIdle"><div class="pop wide glass" style="right:130px" data-find></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Find a time with colleagues</b>Add people and Cue lines up everyone’s day, one lane per person. Times when everyone is free are tinted green. This uses Google’s free/busy lookup, so it works for anyone at BrowserStack, even if they haven’t shared their calendar with you.</div></div>
+  <div class="desk dark" data-mb="upcomingIdle"><div class="pop wide glass" style="right:130px" data-find="dark"></div></div>
+</section>
+
+<section class="board mid" id="detail">
+  <div class="desk light" data-mb="upcomingIdle"><div class="pop wide glass" style="right:130px" data-detail="view"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Click a meeting to see it</b>Click any meeting in the list to open it in place: join link, your reply, who’s coming and the notes. Replying is one click.</div></div>
+  <div class="desk dark" data-mb="upcomingIdle"><div class="pop wide glass" style="right:130px" data-detail="edit"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Edit in place</b>Click the title, time or notes to edit them. Save sends the update to everyone invited. Delete asks first, and only appears on events you organise.</div></div>
+</section>
+
+<!-- ====================== BOARD 4: alert ====================== -->
+<section class="board" id="alert">
+  <div class="desk light" data-mb="now">
+    <div class="alert glass" data-alert></div>
+    <div class="note" style="left:60px; top:230px; width:420px"><b>Meeting starting</b>A banner drops in at the top of the screen when a meeting starts, even in full-screen apps. Press Return to join or Esc to dismiss. It closes itself after a minute.</div>
+  </div>
+  <div class="desk dark" data-mb="now">
+    <div class="alert glass" data-alert></div>
+  </div>
+</section>
+
+<script>
+const C = { work: 'var(--blue)', harness: 'var(--purple)', personal: 'var(--orange)', focus: 'var(--green)', ops: 'var(--teal)' };
+const today = [
+  { s: '09:00', e: '09:30', t: 'Inbox and PR reviews', c: C.focus, past: true },
+  { s: '09:45', e: '10:15', t: 'MOBPC ticket grooming', c: C.ops, past: true, link: 1 },
+  { s: '10:30', e: '10:45', t: 'Mobile platform standup', c: C.work, link: 1, next: true },
+  { s: '11:00', e: '11:45', t: 'AI Harness sync', c: C.harness, link: 1 },
+  { s: '13:00', e: '14:00', t: 'Lunch', c: C.personal },
+  { s: '14:30', e: '15:00', t: '1:1 with Rahul', c: C.work, link: 1 },
+  { s: '16:00', e: '17:00', t: 'Private Cloud design review', c: C.work, link: 1 },
+];
+const tomorrow = [
+  { s: '10:30', t: 'Mobile platform standup', c: C.work, link: 1 },
+  { s: '15:00', t: 'Pulse dashboard demo', c: C.harness, link: 1 },
+];
+const icon = (id, w = 14, h = w) => `<svg width="${w}" height="${h}"><use href="#${id}"/></svg>`;
+
+// countdown ring: fraction remaining
+function ring(frac, size = 15, color = 'currentColor', track = 'currentColor') {
+  const r = size / 2 - 1.6, c = 2 * Math.PI * r;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${track}" stroke-opacity=".28" stroke-width="2"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"
+      stroke-dasharray="${c * frac} ${c}"/></svg>`;
+}
+
+const cueItems = {
+  idle: `<span class="mbi">${icon('cal', 15)}</span>`,
+  upcoming: `<span class="mbi active">${ring(0.6)}<span class="num">Standup in 12m</span></span>`,
+  upcomingIdle: `<span class="mbi">${ring(0.6)}<span class="num">Standup in 12m</span></span>`,
+  now: `<span class="pill">${icon('cam', 13)}Join Standup</span>`,
+  during: `<span class="mbi">${ring(0.47, 15, 'var(--blue)')}<span class="num">8m left</span></span>`,
+  later: `<span class="mbi">${icon('cal', 15)}<span class="num">Sync at 11:00</span></span>`,
+};
+
+// menu bars
+document.querySelectorAll('[data-mb]').forEach(d => {
+  d.prepend(document.getElementById('tpl-menubar').content.cloneNode(true));
+  d.querySelector('.cue-slot').outerHTML = cueItems[d.dataset.mb];
+  if (d.dataset.mb === 'during') d.querySelector('.menubar .num:last-child').innerHTML = 'Mon 5 Oct&nbsp; 10:37';
+  if (d.dataset.mb === 'now') d.querySelector('.menubar .num:last-child').innerHTML = 'Mon 5 Oct&nbsp; 10:30';
+});
+
+// states board
+const states = [
+  ['idle', 'Nothing coming up', 'Just the glyph. No text, no width taken.'],
+  ['later', 'More than an hour away', 'Shows the title and start time.'],
+  ['upcomingIdle', 'Within the hour', 'The ring empties as the start time gets closer.'],
+  ['now', 'Starting now', 'Turns into a Join button you can click straight from the menu bar.'],
+  ['during', 'In progress', 'The ring fills blue with time used. Shows minutes left.'],
+];
+document.querySelectorAll('[data-states]').forEach(g => {
+  g.innerHTML = states.map(([k, h, s]) => `
+    <div class="st"><div class="strip">${cueItems[k]}<svg width="18" height="14"><use href="#wifi"/></svg><span class="num">10:18</span></div>
+    <div class="cap">${h}<span>${s}</span></div></div>`).join('');
+});
+
+// direction A
+document.querySelectorAll('[data-menu]').forEach(m => {
+  const sel = +(m.dataset.sel ?? -1);
+  let i = 0;
+  const r = (cls, inner) => `<div class="row ${cls} ${i++ === sel ? 'sel' : ''}">${inner}</div>`;
+  let h = r('join', `${icon('cam', 15)}<span class="title">Join standup <span class="sub">in 12 min</span></span><span class="kbd">⌘J</span>`);
+  h += `<div class="sep"></div><div class="hdr">Today</div>`;
+  today.forEach(e => h += r(e.past ? 'past' : '', `<span class="dot" style="background:${e.c};${e.past ? 'opacity:.4' : ''}"></span><span class="t num">${e.s}</span><span class="title">${e.t}</span>`));
+  h += `<div class="sep"></div><div class="hdr">Tomorrow</div>`;
+  tomorrow.forEach(e => h += r('', `<span class="dot" style="background:${e.c}"></span><span class="t num">${e.s}</span><span class="title">${e.t}</span>`));
+  h += `<div class="sep"></div>`;
+  h += r('', `<span class="title">Open Calendar</span>`);
+  h += r('', `<span class="title">Settings…</span><span class="kbd">⌘,</span>`);
+  h += r('', `<span class="title">Quit Cue</span><span class="kbd">⌘Q</span>`);
+  m.innerHTML = h;
+});
+
+// direction B
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const D0 = 8 * 60, D1 = 20 * 60, pct = m => ((m - D0) / (D1 - D0) * 100).toFixed(2) + '%';
+document.querySelectorAll('[data-pop]').forEach(p => {
+  const hov = +(p.dataset.hov ?? -1);
+  let h = `<div class="hero"><div class="grow">
+      <div class="when num">In 12 minutes</div>
+      <div class="what">Mobile platform standup</div>
+      <div class="meta num">10:30 – 10:45&emsp;${icon('cam', 13)}Google Meet</div>
+    </div><div class="btn-join">${icon('cam', 14)}Join</div></div>`;
+  h += `<div class="ribbon"><div class="track"></div>`;
+  today.forEach(e => h += `<div class="ev ${e.past ? 'past' : ''}" style="left:${pct(toMin(e.s))};width:calc(${pct(toMin(e.e) - toMin(e.s) + D0)} - 2px);background:${e.c}"></div>`);
+  h += `<div class="now" style="left:${pct(10 * 60 + 18)}"></div>`;
+  [9, 12, 15, 18].forEach(x => h += `<div class="hr num" style="left:${pct(x * 60)}">${x}</div>`);
+  h += `</div><div class="list"><div class="hdr">Later today</div>`;
+  let i = 0;
+  today.filter(e => !e.past && !e.next).forEach(e => h += `<div class="row ${i++ === hov ? 'hov' : ''}"><span class="bar" style="background:${e.c}"></span><span class="t num">${e.s}</span><span class="title">${e.t}</span>${e.link ? `<span class="cam">${icon('cam', 15)}</span>` : ''}</div>`);
+  h += `<div class="hdr">Tomorrow</div>`;
+  tomorrow.forEach(e => h += `<div class="row"><span class="bar" style="background:${e.c}"></span><span class="t num">${e.s}</span><span class="title">${e.t}</span><span class="cam">${icon('cam', 15)}</span></div>`);
+  h += `</div><div class="foot"><div class="row">${icon('cal', 14)}Open Calendar</div><div class="row">${icon('gear', 14)}</div></div>`;
+  p.innerHTML = h;
+});
+
+// alert
+document.querySelectorAll('[data-alert]').forEach(a => {
+  a.innerHTML = `<div class="ring" style="position:relative;width:40px;height:40px;color:var(--red)">${ring(1, 40, 'var(--red)', 'var(--red)')}<span style="position:absolute;inset:0;display:grid;place-items:center">${icon('cam', 18)}</span></div>
+    <div class="grow"><div class="k">Starting now</div><div class="ti">Mobile platform standup</div><div class="me num" style="display:flex;gap:6px;align-items:center">10:30 – 10:45&emsp;${icon('cam', 13)}Google Meet</div></div>
+    <div class="acts"><div class="btn-join">Join</div><div class="btn-sec">Dismiss</div></div>`;
+});
+
+
+// fake app window behind everything
+const appwin = () => `<div class="appwin"><div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="side">${[70,55,80,60,45,75,50].map(w => `<div class="ph" style="width:${w}%"></div>`).join('')}</div>
+  <div class="main">${[[60,90,40],[45,80],[70,95,85,30],[50,65],[40,88,60]].map(ls => `<div class="msg"><div class="av"></div><div class="lines">${ls.map(w => `<div class="ph" style="width:${w}%"></div>`).join('')}</div></div>`).join('')}</div></div>`;
+
+const people = [['RK', '#5e5ce6'], ['PS', '#ff9f0a'], ['AM', '#30d158'], ['NJ', '#ff375f'], ['VT', '#64d2ff']];
+document.querySelectorAll('[data-big]').forEach(d => {
+  d.insertAdjacentHTML('beforeend', appwin() + `<div class="scrim"></div>
+  <div class="big glass">
+    <div class="cal"><span class="dot" style="background:var(--blue)"></span>Work</div>
+    <div class="min"><div class="chip">Minimize<kbd style="font:500 11px 'SF Pro Text';opacity:.7">esc</kbd></div></div>
+    <div class="bigring">${ring(0.7, 210, 'var(--blue)', 'currentColor').replace(/stroke-width="2"/g, 'stroke-width="9"').replace('r="103.4"', 'r="98"').replace('r="103.4"', 'r="98"')}
+      <div class="in"><div class="n num">0:42</div><div class="l">until it starts</div></div></div>
+    <h1>Mobile platform standup</h1>
+    <div class="bmeta num"><span>10:30 – 10:45</span><span>${icon('cam', 18)}Google Meet</span></div>
+    <div class="people"><div class="avs">${people.map(([n, c]) => `<i style="background:${c}">${n}</i>`).join('')}</div>Rahul, Priya and 4 others</div>
+    <div class="bacts">
+      <div class="btn-join">${icon('cam', 18)}Join<kbd>↩</kbd></div>
+      <div class="btn-sec">Remind me in 1 min</div>
+      <div class="btn-sec">Dismiss</div>
+    </div>
+    <div class="hint">Click outside or press esc to minimize. Dismiss closes it for good.</div>
+  </div>`);
+});
+
+const miniCard = (kind, extra = '') => {
+  const k = {
+    soon: { r: ring(0.7, 36, 'var(--blue)'), c: 'var(--blue)', k: 'Starts in 0:42', t: 'Mobile platform standup', su: '10:30 – 10:45, Google Meet', b: `<div class="btn-join">Join</div>` },
+    live: { r: ring(0.47, 36, 'var(--blue)'), lbl: '8m', c: 'var(--blue)', k: 'In call, 8 min left', t: 'Mobile platform standup', su: 'Next: AI Harness sync at 11:00', b: `<div class="btn-sec">Back to call</div>` },
+    end: { r: ring(0.12, 36, 'var(--orange)'), lbl: '2m', c: 'var(--orange)', k: 'Ends in 2 min', t: 'Mobile platform standup', su: 'Next: AI Harness sync at 11:00', b: `<div class="btn-sec">Back to call</div>` },
+  }[kind];
+  return `<div class="mini glass ${extra}"><div class="x glass">✕</div><div class="r" style="color:${k.c}">${k.r}<span>${k.lbl ?? icon('cam', 14)}</span></div>
+    <div class="grow"><div class="k num" style="color:${k.c}">${k.k}</div><div class="ti">${k.t}</div><div class="su num">${k.su}</div></div>${k.b}</div>`;
+};
+
+document.querySelectorAll('[data-minidesk]').forEach(d => {
+  d.insertAdjacentHTML('beforeend', appwin() + `<div class="ghost"></div>
+    <svg class="ghost-arrow" style="left:0;top:0" width="1600" height="1000"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--blue)"/></marker></defs>
+      <path d="M1180 230 C 1260 200, 1300 160, 1330 125" fill="none" stroke="var(--blue)" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#ah)"/></svg>
+    ${miniCard('live')}
+    <div class="note glass" style="left:200px; bottom:110px; width:460px; padding:18px 20px; border-radius:18px"><b>Click away and it shrinks to a card</b>The card floats above every app. Drag it anywhere and it remembers the spot. Click it to bring the call to the front, or ✕ to close it. It closes itself when the meeting ends.</div>`);
+});
+
+document.querySelectorAll('[data-mgrid]').forEach(g => {
+  g.innerHTML = [['soon', 'Before the meeting starts', 'Counts down to the start. Join is one click away.'],
+                 ['live', 'In the call', 'Shows time left and what’s next. Back to call brings the Meet window to the front.'],
+                 ['end', 'Wrapping up', 'Turns orange in the last few minutes so you don’t run over.']]
+    .map(([k, h, c]) => `<div>${miniCard(k, 'static')}<div class="cap">${h}<span>${c}</span></div></div>`).join('');
+});
+
+
+// ---------- compose / find / detail ----------
+const P = { you: ['You', 'var(--blue)'], priya: ['Priya', '#ff9f0a', 'PS'], rahul: ['Rahul', '#5e5ce6', 'RK'], aman: ['Aman', '#30d158', 'AM'] };
+const pctT = t => { const [h, m] = t.split(':').map(Number); return ((h * 60 + m - 480) / 720 * 100).toFixed(2) + '%'; };
+const spanW = (a, b) => { const f = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; }; return ((f(b) - f(a)) / 720 * 100).toFixed(2) + '%'; };
+const tomorrowYou = [['10:30','10:45','var(--blue)'], ['15:00','16:00','var(--purple)']];
+const busy = {
+  priya: [['09:30','10:30'], ['10:30','10:45'], ['15:00','16:00'], ['17:00','18:00']],
+  rahul: [['10:30','10:45'], ['11:00','12:00'], ['13:30','14:00'], ['16:30','17:30']],
+};
+function lanes(people, { ghost, ghostBad, free = [] } = {}) {
+  let h = '<div class="lanes">';
+  free.forEach(([a, b]) => h += `<div class="free" style="left:calc(48px + (100% - 48px) * ${parseFloat(pctT(a)) / 100});width:calc((100% - 48px) * ${parseFloat(spanW(a, b)) / 100})"></div>`);
+  if (ghost) h += `<div class="ghost2 ${ghostBad ? 'bad' : ''}" style="left:calc(48px + (100% - 48px) * ${parseFloat(pctT(ghost[0])) / 100} - 2px);width:calc((100% - 48px) * ${parseFloat(spanW(ghost[0], ghost[1])) / 100} + 4px)"></div>`;
+  h += `<div class="lane"><span class="who">You</span><div class="tr">${tomorrowYou.map(([a, b, c]) => `<div class="ev" style="left:${pctT(a)};width:calc(${spanW(a, b)} - 1px);background:${c}"></div>`).join('')}</div></div>`;
+  people.forEach(k => {
+    const [n, c] = P[k];
+    h += `<div class="lane"><span class="who">${n}</span><div class="tr">${busy[k].map(([a, b]) => `<div class="busy" style="--c:${c};left:${pctT(a)};width:calc(${spanW(a, b)} - 1px)"></div>`).join('')}</div></div>`;
+  });
+  h += `<div class="hrs">${[9, 12, 15, 18].map(x => `<i style="left:${pctT(x + ':00')}">${x}</i>`).join('')}</div></div>`;
+  return h;
+}
+const chipP = k => `<span class="chip2"><span class="av" style="background:${P[k][1]}">${P[k][2]}</span>${P[k][0]} ${k === 'priya' ? 'Shah' : 'Kumar'}</span>`;
+
+document.querySelectorAll('[data-compose]').forEach(p => {
+  const ok = p.dataset.compose === 'ok';
+  const time = ok ? '16:00 – 16:30' : '15:00 – 15:30';
+  p.innerHTML = `
+    <div class="nl">Design sync with <span class="tok">Priya</span> <span class="tok">tomorrow</span>&nbsp;at&nbsp;<span class="tok">${ok ? '4pm' : '3pm'}</span><span class="caret"></span></div>
+    <div class="chips">
+      <span class="chip2">${icon('cal', 13)}Tomorrow</span>
+      <span class="chip2 num">${icon('clock', 13)}${time}</span>
+      ${chipP('priya')}
+      <span class="chip2">${icon('cam', 13)}Google Meet</span>
+      <span class="chip2"><span class="dot" style="background:var(--blue);width:7px;height:7px"></span>Work</span>
+    </div>
+    <div class="sub">Tuesday <span>Your day and Priya’s</span></div>
+    ${lanes(['priya'], { ghost: ok ? ['16:00', '16:30'] : ['15:00', '15:30'], ghostBad: !ok })}
+    <div class="hint">${ok
+      ? `<span class="d" style="background:var(--green)"></span>Priya is free then`
+      : `<span class="d" style="background:var(--red)"></span>Priya’s busy then. Try <span class="slot">16:00</span><span class="slot">12:00</span>`}</div>
+    <div class="actions"><span class="left">Invites Priya by email</span>
+      <span class="right"><span class="btn-sec s">Cancel</span><span class="btn-join s">Create<span class="k2">⌘↩</span></span></span></div>`;
+});
+
+document.querySelectorAll('[data-find]').forEach(p => {
+  p.innerHTML = `
+    <div class="nl">Sync with <span class="tok">Priya</span> and <span class="tok">Rahul</span> <span class="tok">tomorrow</span>&nbsp;<span class="tok">45m</span><span class="caret"></span></div>
+    <div class="chips">
+      <span class="chip2">${icon('cal', 13)}Tomorrow</span>
+      <span class="chip2 num">${icon('clock', 13)}45 min</span>
+      ${chipP('priya')}${chipP('rahul')}
+      <span class="chip2 add">${icon('plus', 12)}Add person</span>
+    </div>
+    <div class="sub">Tuesday <span>Green is when everyone’s free</span></div>
+    ${lanes(['priya', 'rahul'], { free: [['12:00', '13:30'], ['14:00', '15:00'], ['18:00', '20:00']], ghost: ['12:00', '12:45'] })}
+    <div class="hint">Everyone’s free at <span class="slot on">12:00</span><span class="slot">14:00</span><span class="slot">18:00</span></div>
+    <div class="actions"><span class="left">Tuesday 12:00 – 12:45</span>
+      <span class="right"><span class="btn-sec s">Cancel</span><span class="btn-join s">Create<span class="k2">⌘↩</span></span></span></div>`;
+});
+
+document.querySelectorAll('[data-detail]').forEach(p => {
+  const edit = p.dataset.detail === 'edit';
+  const people = [['Rahul Kumar', '#5e5ce6', 'RK', 'Organiser', 'var(--green)'], ['You', 'var(--blue)', 'ES', 'Going', 'var(--green)']];
+  p.innerHTML = `
+    <div class="dtop"><span class="back">${icon('chev', 14)}Today</span><span class="more">${icon('dots', 15)}</span></div>
+    <div class="dt">
+      <div class="calname"><span class="dot" style="background:var(--blue);width:7px;height:7px"></span>Work</div>
+      ${edit
+        ? `<div class="field ttl focus" style="margin-top:6px">1:1 with Rahul, Q4 goals<span class="caret"></span></div>
+           <div class="trow"><span class="field">Mon 5 Oct</span><span class="field num">14:30</span>–<span class="field num">15:15</span></div>`
+        : `<h3>1:1 with Rahul</h3><div class="tline num">Monday 5 October, 14:30 – 15:00</div>`}
+    </div>
+    ${edit ? '' : `<div style="padding:12px 16px 0"><span class="btn-join s" style="display:inline-flex">${icon('cam', 14)}Join Google Meet</span></div>
+    <div class="rsvp"><span class="lbl">Going?</span><span class="seg"><span class="on">${icon('check', 11)}Yes</span><span>Maybe</span><span>No</span></span></div>`}
+    <div class="ppl">${people.map(([n, c, i, r, st]) => `<div class="p"><span class="av" style="background:${c}">${i}<b style="background:${st}"></b></span>${n}<span class="role">${r}</span></div>`).join('')}
+      ${edit ? `<div class="p" style="color:var(--blue)">${icon('plus', 13)}Add person</div>` : ''}</div>
+    <div class="notes ${edit ? 'field' : ''}">Agenda: Q4 goals, Private Cloud on-call rotation, and the MOBPC triage backlog.</div>
+    <div class="dact">${edit
+      ? `<span class="row del">${icon('trash', 14)}Delete</span><span style="display:flex;gap:8px"><span class="btn-sec s">Cancel</span><span class="btn-join s">Save<span class="k2">⌘S</span></span></span>`
+      : `<span class="row">${icon('arrow', 14)}Open in Google Calendar</span><span class="row">Edit</span>`}</div>`;
+});
+
+// glance popover gets a "New event" entry in the footer
+document.querySelectorAll('[data-pop] .foot').forEach(f => {
+  f.firstElementChild.outerHTML = `<div class="row plus">${icon('plus', 14)}New event<span class="k2" style="color:var(--fg3)">⌘N</span></div>`;
+});
+
+const b = location.hash.slice(1) || 'glance';
+document.getElementById(b).classList.add('on');
+</script>
+</body>
+</html>
