@@ -51,6 +51,7 @@ final class PopoverController {
     private var bag = Set<AnyCancellable>()
     private var resignObserver: Any?
     private var closedAt = Date.distantPast
+    private var peek: PeekController?
 
     init(model: AppModel, button: NSStatusBarButton?) {
         self.model = model
@@ -72,8 +73,12 @@ final class PopoverController {
             if !self.model.back() { self.close() }
         }
         // Built fresh on every open and dropped on close, so nothing sits in memory while hidden.
+        let peek = PeekController(model: model, owner: panel)
         let root = PopoverView(close: { [weak self] in self?.close() }, onSize: { [weak self] size in self?.layout(size) })
+            .environment(\.peek) { [weak peek] m, rect in peek?.hover(m, at: rect) }
         let host = NSHostingView(rootView: AnyView(root.environmentObject(model)))
+        self.peek = peek
+        model.$route.dropFirst().sink { [weak peek] _ in peek?.hide() }.store(in: &bag)
         panel.contentView = host
         self.panel = panel
         self.host = host
@@ -129,11 +134,98 @@ final class PopoverController {
         menuObservers.forEach { NotificationCenter.default.removeObserver($0) }
         menuObservers = []
         bag.removeAll()
+        peek?.hide()
+        peek = nil
         if model.route != .compose { model.route = .main }
         self.panel = nil
         host = nil
         closedAt = Date()
         button?.highlight(false)
+        fade([panel], in: false) { panel.orderOut(nil) }
+    }
+}
+
+// MARK: - Hover peek
+
+/// The details card that floats beside the popover while a meeting is hovered.
+/// It never takes the mouse, so moving down the list just moves the card along.
+@MainActor
+final class PeekController {
+    private unowned let model: AppModel
+    private weak var owner: NSWindow?
+    private var panel: FloatingPanel?
+    private var hovered: String?
+    private var pending: DispatchWorkItem?
+
+    init(model: AppModel, owner: NSWindow) {
+        self.model = model
+        self.owner = owner
+    }
+
+    /// A rect means the pointer entered the meeting; nil means it left.
+    func hover(_ m: Meeting, at rect: CGRect?) {
+        guard let rect else {
+            // Leaving one row can arrive after entering the next; ignore it then.
+            guard hovered == m.key else { return }
+            hovered = nil
+            schedule(0.12) { [weak self] in self?.hide() }
+            return
+        }
+        hovered = m.key
+        if panel != nil {
+            pending?.cancel()
+            show(m, rect)
+        } else {
+            schedule(0.35) { [weak self] in self?.show(m, rect) }
+        }
+    }
+
+    private func schedule(_ delay: TimeInterval, _ f: @escaping () -> Void) {
+        pending?.cancel()
+        let work = DispatchWorkItem(block: f)
+        pending = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    private func show(_ m: Meeting, _ rect: CGRect) {
+        guard let owner, owner.isVisible else { return }
+        let view = PeekView(meeting: m, now: model.now)
+        let host: NSHostingView<PeekView>
+        let fresh = panel == nil
+        if let existing = panel?.contentView as? NSHostingView<PeekView> {
+            host = existing
+            host.rootView = view
+        } else {
+            host = NSHostingView(rootView: view)
+            let p = FloatingPanel(level: .popUpMenu, keyable: false)
+            p.ignoresMouseEvents = true
+            p.contentView = host
+            panel = p
+        }
+        guard let panel else { return }
+        let size = host.fittingSize
+        let o = owner.frame
+        let visible = owner.screen?.visibleFrame ?? o
+        // Left of the popover, level with the hovered item; the right side if there's no room.
+        var x = o.minX - size.width - 10
+        if x < visible.minX + 8 { x = o.maxX + 10 }
+        var top = min(o.maxY, o.maxY - rect.minY + 12)
+        top = max(top, visible.minY + 8 + size.height)
+        panel.setFrame(NSRect(x: x, y: top - size.height, width: size.width, height: size.height), display: true)
+        panel.invalidateShadow()
+        if fresh {
+            panel.orderFront(nil)
+            fade([panel], in: true)
+            DispatchQueue.main.async { panel.invalidateShadow() }
+        }
+    }
+
+    func hide() {
+        pending?.cancel()
+        pending = nil
+        hovered = nil
+        guard let panel else { return }
+        self.panel = nil
         fade([panel], in: false) { panel.orderOut(nil) }
     }
 }

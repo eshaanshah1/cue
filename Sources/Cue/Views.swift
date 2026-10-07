@@ -133,6 +133,11 @@ struct Ring: View {
     }
 }
 
+extension EnvironmentValues {
+    /// Reports the meeting under the pointer and its frame in the popover window; nil when the pointer leaves.
+    @Entry var peek: (Meeting, CGRect?) -> Void = { _, _ in }
+}
+
 /// 24h locales print "10:30", 12h ones "10:30 AM"; size the time column to fit either.
 private let timeColumn: CGFloat = Fmt.time(Date()).contains(where: \.isLetter) ? 62 : 40
 
@@ -313,6 +318,8 @@ struct RibbonView: View {
     let meetings: [Meeting]
     let now: Date
     let highlight: String?
+    @Environment(\.peek) private var peek
+    @State private var hovered: String?
 
     private var hours: (Double, Double) {
         let cal = Calendar.current
@@ -328,16 +335,27 @@ struct RibbonView: View {
         let pos = { (d: Date) in (d.timeIntervalSince(day) / 3600 - lo) / (hi - lo) }
         GeometryReader { geo in
             let w = geo.size.width
+            let g = geo.frame(in: .global)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.07)).frame(height: 18)
                 ForEach(meetings, id: \.key) { m in
                     let x = max(0, pos(m.start)) * w
-                    let x2 = min(1, pos(m.end)) * w
+                    let bw = max(3, min(1, pos(m.end)) * w - x - 2)
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(Color(nsColor: m.color))
-                        .opacity(m.end <= now ? 0.35 : 1)
-                        .frame(width: max(3, x2 - x - 2), height: 18)
+                        .fill(Color(nsColor: m.color).opacity(m.end <= now ? 0.35 : 1))
+                        .frame(width: bw, height: 18)
+                        .background {
+                            if hovered == m.key {
+                                RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary, lineWidth: 1.5).padding(-3)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .onHover { inside in
+                            if inside { hovered = m.key } else if hovered == m.key { hovered = nil }
+                            peek(m, inside ? CGRect(x: g.minX + x, y: g.minY, width: bw, height: 18) : nil)
+                        }
                         .offset(x: x)
+                        .zIndex(hovered == m.key ? 1 : 0)
                 }
                 ForEach(Array(stride(from: ceil(lo / 3) * 3, through: hi, by: 3)).filter { $0 > lo && $0 < hi }, id: \.self) { hr in
                     Text("\(Int(hr))")
@@ -369,6 +387,8 @@ struct MeetingRow: View {
     let join: () -> Void
     @State private var hover = false
     @State private var camHover = false
+    @State private var frame = CGRect.zero
+    @Environment(\.peek) private var peek
 
     var body: some View {
         HStack(spacing: 10) {
@@ -399,7 +419,126 @@ struct MeetingRow: View {
         .background(RoundedRectangle(cornerRadius: 9).fill(hover ? Color.primary.opacity(0.06) : .clear))
         .contentShape(Rectangle())
         .onTapGesture(perform: open)
-        .onHover { hover = $0 }
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame = $0 }
+        .onHover {
+            hover = $0
+            peek(meeting, $0 ? frame : nil)
+        }
+    }
+}
+
+/// What hovering a meeting shows beside the popover. Read-only; clicking the meeting opens the full details.
+struct PeekView: View {
+    let meeting: Meeting
+    let now: Date
+
+    private static let colors: [NSColor] = [.systemIndigo, .systemOrange, .systemGreen, .systemPink, .systemTeal, .systemPurple]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 6) {
+                if !meeting.calendarName.isEmpty {
+                    Circle().fill(Color(nsColor: meeting.color)).frame(width: 7, height: 7)
+                    Text(meeting.calendarName).lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                Text(when).fontWeight(.semibold).foregroundStyle(meeting.end <= now ? Color.tertiary : Color.cueBlue).monospacedDigit()
+            }
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+            Text(meeting.title)
+                .font(.system(size: 15, weight: .semibold))
+                .tracking(-0.2)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 5)
+            VStack(alignment: .leading, spacing: 3) {
+                line("clock", "\(Fmt.range(meeting)) · \(duration)")
+                if let link = meeting.link { line("video", link.service) }
+                if let room = meeting.room { line("mappin.and.ellipse", room) }
+            }
+            .padding(.top, 4)
+            if let who {
+                HStack(spacing: 8) {
+                    HStack(spacing: 3) {
+                        ForEach(Array(avatars.enumerated()), id: \.offset) { i, a in
+                            Text(a.initials)
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 20, height: 20)
+                                .background(Circle().fill(Color(nsColor: a.isSelf ? .systemBlue : Self.colors[i % Self.colors.count])))
+                        }
+                    }
+                    Text(who).lineLimit(1)
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .padding(.top, 10)
+            }
+            if let notes = meeting.notes {
+                Rectangle().fill(Color.primary.opacity(0.09)).frame(height: 1).padding(.top, 10)
+                Text(notes)
+                    .font(.system(size: 12))
+                    .lineSpacing(2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 9)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(width: 280, alignment: .leading)
+        .glass(16)
+    }
+
+    private func line(_ icon: String, _ text: String) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(Color.tertiary).frame(width: 13)
+            Text(text).lineLimit(1).truncationMode(.tail)
+        }
+        .font(.system(size: 12))
+        .foregroundStyle(.secondary)
+        .monospacedDigit()
+    }
+
+    private var when: String {
+        if meeting.end <= now { return "Ended" }
+        if meeting.start <= now { return "Now" }
+        if !Calendar.current.isDate(meeting.start, inSameDayAs: now) { return "Tomorrow" }
+        let mins = Fmt.minutes(meeting.start.timeIntervalSince(now))
+        let h = mins / 60, r = mins % 60
+        return h == 0 ? "In \(mins) min" : r == 0 ? "In \(h) hr" : "In \(h) hr \(r) min"
+    }
+
+    private var duration: String {
+        let mins = Int(meeting.end.timeIntervalSince(meeting.start) / 60)
+        let h = mins / 60, r = mins % 60
+        return h == 0 ? "\(mins) min" : r == 0 ? "\(h) hr" : "\(h) hr \(r) min"
+    }
+
+    /// Google gives people with roles; macOS Calendar only names.
+    private var others: [String] {
+        let guests = meeting.people.filter { !$0.resource && !$0.isSelf }.sorted { $0.organizer && !$1.organizer }
+        return meeting.people.isEmpty ? meeting.attendees : guests.map(\.display)
+    }
+
+    private var withYou: Bool { meeting.people.contains(where: \.isSelf) }
+
+    private var who: String? {
+        switch others.count {
+        case 0: return nil
+        case 1: return withYou ? "\(others[0]) and you" : others[0]
+        default: return Fmt.people(others)
+        }
+    }
+
+    private var avatars: [(initials: String, isSelf: Bool)] {
+        var out = others.prefix(4).map { (Fmt.initials($0), false) }
+        if others.count == 1, withYou, let me = meeting.people.first(where: \.isSelf) {
+            out.append((String(Fmt.initials(me.display).prefix(1)), true))
+        }
+        return out
     }
 }
 

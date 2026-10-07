@@ -256,6 +256,23 @@
   .dact { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--sep); margin-top: 14px; padding: 8px 10px 2px; }
   .dact .row { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: 8px; font-size: 13px; color: var(--fg2); }
   .dact .row.del { color: var(--red); }
+
+  /* ---------- hover peek ---------- */
+  .ribbon .ev.hov { box-shadow: 0 0 0 1.5px var(--glassbg), 0 0 0 3px var(--fg2); z-index: 1; }
+  .peek { position: absolute; width: 280px; border-radius: 16px; padding: 12px 14px 12px; }
+  .light .peek { --glass: rgba(252,252,254,.86); } .dark .peek { --glass: rgba(40,42,50,.82); }
+  .peek .top { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg2); }
+  .peek .top .rel { margin-left: auto; color: var(--blue); font-weight: 600; }
+  .peek h4 { font-size: 15px; font-weight: 600; letter-spacing: -.2px; line-height: 1.25; margin-top: 5px; }
+  .peek .ln { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--fg2); margin-top: 5px; }
+  .peek .ln svg { color: var(--fg3); flex: none; }
+  .peek .ln + .ln { margin-top: 3px; }
+  .peek .who { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--fg2); }
+  .peek .who .avs { display: flex; }
+  .peek .who .avs i { width: 20px; height: 20px; border-radius: 50%; margin-left: 3px; display: grid; place-items: center; font-style: normal; font-size: 8px; font-weight: 700; color: #fff; box-shadow: 0 0 0 1.5px var(--glassbg); }
+  .peek .who .avs i:first-child { margin-left: 0; }
+  .peek .nt { font-size: 12px; line-height: 1.4; color: var(--fg2); margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--sep);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -358,6 +375,17 @@
     <div class="note" style="left:44px; top:120px; width:250px"><b>Edit in place</b>Click the title, time or notes to edit them. Save sends the update to everyone invited. Delete asks first, and only appears on events you organise.</div></div>
 </section>
 
+<section class="board" id="peek">
+  <div class="desk light" data-mb="upcoming">
+    <div class="pop glass" style="right:150px" data-pop data-hov="2" data-peek="rahul"></div>
+    <div class="note" style="left:44px; top:560px; width:330px"><b>Hover a meeting to peek</b>Rest the pointer on a meeting for a moment and its details float beside the popover: time, call, room, who’s coming and the first lines of the notes. Move down the list and the card follows. Click still opens the full details.</div>
+  </div>
+  <div class="desk dark" data-mb="upcoming">
+    <div class="pop glass" style="right:150px" data-pop data-rhov="3" data-peek="harness"></div>
+    <div class="note" style="left:44px; top:560px; width:330px"><b>The timeline too</b>Each block on the ribbon peeks the same way. The hovered block gets a ring so you can tell which one the card belongs to.</div>
+  </div>
+</section>
+
 <!-- ====================== BOARD 4: alert ====================== -->
 <section class="board" id="alert">
   <div class="desk light" data-mb="now">
@@ -454,7 +482,7 @@ document.querySelectorAll('[data-pop]').forEach(p => {
       <div class="meta num">10:30 – 10:45&emsp;${icon('cam', 13)}Google Meet</div>
     </div><div class="btn-join">${icon('cam', 14)}Join</div></div>`;
   h += `<div class="ribbon"><div class="track"></div>`;
-  today.forEach(e => h += `<div class="ev ${e.past ? 'past' : ''}" style="left:${pct(toMin(e.s))};width:calc(${pct(toMin(e.e) - toMin(e.s) + D0)} - 2px);background:${e.c}"></div>`);
+  today.forEach((e, j) => h += `<div class="ev ${e.past ? 'past' : ''} ${j === +(p.dataset.rhov ?? -1) ? 'hov' : ''}" style="left:${pct(toMin(e.s))};width:calc(${pct(toMin(e.e) - toMin(e.s) + D0)} - 2px);background:${e.c}"></div>`);
   h += `<div class="now" style="left:${pct(10 * 60 + 18)}"></div>`;
   [9, 12, 15, 18].forEach(x => h += `<div class="hr num" style="left:${pct(x * 60)}">${x}</div>`);
   h += `</div><div class="list"><div class="hdr">Later today</div>`;
@@ -610,6 +638,36 @@ document.querySelectorAll('[data-detail]').forEach(p => {
 // glance popover gets a "New event" entry in the footer
 document.querySelectorAll('[data-pop] .foot').forEach(f => {
   f.firstElementChild.outerHTML = `<div class="row plus">${icon('plus', 14)}New event<span class="k2" style="color:var(--fg3)">⌘N</span></div>`;
+});
+
+// hover peek, placed left of the popover and level with the hovered row or block
+const peeks = {
+  rahul: { cal: 'Work', c: 'var(--blue)', rel: 'In 4 hr 12 min', t: '1:1 with Rahul', time: '14:30 – 15:00 · 30 min', link: 'Google Meet',
+    who: [['RK', '#5e5ce6'], ['ES', 'var(--blue)']], whoText: 'Rahul Kumar and you',
+    notes: 'Agenda: Q4 goals, Private Cloud on-call rotation, and the MOBPC triage backlog.' },
+  harness: { cal: 'AI Harness', c: 'var(--purple)', rel: 'In 42 min', t: 'AI Harness sync', time: '11:00 – 11:45 · 45 min', link: 'Google Meet', room: 'Bandra, 4th floor · Kestrel',
+    who: [['PS', '#ff9f0a'], ['AM', '#30d158'], ['NJ', '#ff375f'], ['VT', '#64d2ff']], whoText: 'Priya, Aman and 5 others',
+    notes: 'Weekly sync on the evaluation harness. This week: flaky device pool runs, the new scoring rubric, and who owns the nightly report.' },
+};
+document.querySelectorAll('[data-peek]').forEach(p => {
+  const k = peeks[p.dataset.peek];
+  const el = document.createElement('div');
+  el.className = 'peek glass';
+  el.innerHTML = `
+    <div class="top"><span class="dot" style="background:${k.c};width:7px;height:7px"></span>${k.cal}<span class="rel num">${k.rel}</span></div>
+    <h4>${k.t}</h4>
+    <div class="ln num" style="margin-top:4px">${icon('clock', 13)}${k.time}</div>
+    <div class="ln">${icon('cam', 13)}${k.link}</div>
+    ${k.room ? `<div class="ln"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M8 14.5s-4.5-4.3-4.5-8a4.5 4.5 0 0 1 9 0c0 3.7-4.5 8-4.5 8z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="6.5" r="1.6" fill="currentColor"/></svg>${k.room}</div>` : ''}
+    <div class="who"><span class="avs">${k.who.map(([n, c]) => `<i style="background:${c}">${n}</i>`).join('')}</span>${k.whoText}</div>
+    <div class="nt">${k.notes}</div>`;
+  p.parentElement.appendChild(el);
+  requestAnimationFrame(() => {
+    const desk = p.parentElement.getBoundingClientRect(), pop = p.getBoundingClientRect();
+    const target = (p.querySelector('.row.hov') || p.querySelector('.ribbon .ev.hov')).getBoundingClientRect();
+    el.style.left = (pop.left - desk.left - 280 - 10) + 'px';
+    el.style.top = Math.max(pop.top - desk.top, target.top - desk.top - 12) + 'px';
+  });
 });
 
 const b = location.hash.slice(1) || 'glance';

@@ -75,6 +75,10 @@ enum Snapshot {
         save("findtime", chrome(ComposeView(c: f)))
         let oneOnOne = store.meetings[5]
         save("detail", chrome(DetailView(meeting: oneOnOne, close: {})))
+        save("peek", VStack(alignment: .leading, spacing: 28) {
+            PeekView(meeting: oneOnOne, now: model.now)
+            PeekView(meeting: store.meetings[3], now: model.now)
+        })
         var mine = oneOnOne
         mine.isOrganizer = true
         save("edit", chrome(EditView(meeting: mine)))

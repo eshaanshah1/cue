@@ -60,7 +60,8 @@ final class GoogleAuth {
     var canWrite: Bool { grantedScopes.contains("auth/calendar.events") || grantedScopes.contains("auth/calendar ") || grantedScopes.hasSuffix("auth/calendar") }
 
     init() {
-        if let saved = Keychain.read() {
+        // Demo mode never touches the real sign-in, so it doesn't stall on a Keychain prompt.
+        if !CommandLine.arguments.contains("--demo"), let saved = Keychain.read() {
             email = saved.account
             refreshToken = saved.token
         }
