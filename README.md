@@ -28,14 +28,14 @@ Runs on the mockups' meetings at a pretend time and never opens real links.
 ```sh
 open -n build/Cue.app --args --demo 10:18 --show popover   # popover
 open -n build/Cue.app --args --demo 10:29:10               # overlay fires at 10:29
-open -n build/Cue.app --args --demo 10:37 --show card      # in-call card
+open -n build/Cue.app --args --demo 10:37 --show card      # minimized card
 .build/debug/Cue --demo --snapshot snaps                   # render every surface to PNGs
 ```
 
 ## Layout
 
 - `CalendarStore` loads today and tomorrow from Google (`GoogleAuth`, `GoogleCalendar`) or from EventKit.
-- `AppModel` runs a single timer aimed at the next minute boundary and drives the alert flow: overlay → minimized card → joined → closed.
+- `AppModel` runs a single timer aimed at the next minute boundary and drives the alert flow: overlay → minimized card → closed. Joining a call closes it.
 - `Windows.swift` holds the AppKit panels (popover, 80% overlay, floating card) and the menu bar item.
 - `Compose.swift` handles adding events: text parsing, free slots, and the per-person lanes. `Detail.swift` holds the details, edit and permission screens.
 - `Views.swift` holds the rest of the SwiftUI content. Per-second updates happen only inside visible countdowns.

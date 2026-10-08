@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch value(after: "--show") {
         case "popover": status?.popover.show()
         case "overlay": model.hero.map(model.present)
-        case "card": model.meetings.first { $0.isLive(at: Clock.now()) }.map(model.join)
+        case "card": model.meetings.first { $0.isLive(at: Clock.now()) }.map { model.present($0); model.minimize() }
         default: break
         }
     }

@@ -44,14 +44,14 @@ enum Snapshot {
 
         // Mini card states.
         showsHover = true
-        func card(_ t: String, joined: Bool) -> some View {
+        func card(_ t: String) -> some View {
             Clock.setDemo(time: t)
-            return MiniCard(meeting: standup, joined: joined, now: Clock.now())
+            return MiniCard(meeting: standup, now: Clock.now())
         }
         save("card", VStack(alignment: .leading, spacing: 28) {
-            card("10:29:18", joined: false)
-            card("10:37", joined: true)
-            card("10:43", joined: true)
+            card("10:29:18")
+            card("10:37")
+            card("10:43")
         })
         showsHover = false
 

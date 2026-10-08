@@ -822,7 +822,7 @@ struct MiniCardView: View {
         Group {
             if let m = model.active {
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
-                    MiniCard(meeting: m, joined: model.activeJoined, now: Clock.now())
+                    MiniCard(meeting: m, now: Clock.now())
                 }
             }
         }
@@ -834,7 +834,6 @@ struct MiniCardView: View {
 struct MiniCard: View {
     @EnvironmentObject var model: AppModel
     let meeting: Meeting
-    let joined: Bool
     let now: Date
     @State private var hover = false
 
@@ -854,7 +853,7 @@ struct MiniCard: View {
             sub = ([Fmt.range(m), m.link?.service, m.room].compactMap { $0 }).joined(separator: ", ")
         } else {
             let mins = Fmt.minutes(left)
-            kicker = wrapping ? "Ends in \(mins) min" : (joined ? "In call, \(mins) min left" : "Started, \(mins) min left")
+            kicker = wrapping ? "Ends in \(mins) min" : "Started, \(mins) min left"
             sub = next.map { "Next: \($0.title) at \(Fmt.time($0.start))" } ?? "Nothing after this"
         }
         let fraction = live ? left / m.end.timeIntervalSince(m.start) : m.start.timeIntervalSince(now) / 60
@@ -875,9 +874,7 @@ struct MiniCard: View {
                 Text(sub).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).monospacedDigit()
             }
             Spacer(minLength: 0)
-            if joined {
-                Button("Back to call") { model.backToCall() }.buttonStyle(SecondaryStyle())
-            } else if m.link != nil {
+            if m.link != nil {
                 Button("Join") { model.join(m) }.buttonStyle(JoinStyle(height: 28, size: 12, padding: 12))
             }
         }
@@ -890,7 +887,7 @@ struct MiniCard: View {
         .onTapGesture { model.expand() }
         .gesture(WindowDragGesture())
         .overlay(alignment: .topLeading) {
-            Button { model.closeCard() } label: {
+            Button { model.dismiss() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.secondary)
@@ -902,6 +899,6 @@ struct MiniCard: View {
             .opacity(hover || Snapshot.showsHover ? 1 : 0)
         }
         .onHover { hover = $0 }
-        .help(joined ? "Click to go back to the call. Drag to move." : "Click to expand. Drag to move.")
+        .help("Click to expand. Drag to move.")
     }
 }

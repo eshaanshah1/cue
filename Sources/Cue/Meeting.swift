@@ -138,16 +138,13 @@ enum Joiner {
     /// Demo mode never opens real links.
     static var dryRun = false
 
-    /// Opens the call and returns the bundle id of the app that handled it, so "Back to call" can find it.
-    static func open(_ link: MeetingLink) -> String? {
+    static func open(_ link: MeetingLink) {
         var url = link.url
         if link.service == "Zoom", let native = zoomNative(url),
            NSWorkspace.shared.urlForApplication(toOpen: native) != nil {
             url = native
         }
-        let handler = NSWorkspace.shared.urlForApplication(toOpen: url).flatMap { Bundle(url: $0)?.bundleIdentifier }
         if !dryRun { NSWorkspace.shared.open(url) }
-        return handler
     }
 
     /// zoom.us/j/123?pwd=x → zoommtg://zoom.us/join?confno=123&pwd=x, skipping the browser hop.
@@ -166,11 +163,6 @@ enum Joiner {
         }
         out.queryItems = query
         return out.url
-    }
-
-    static func activate(bundleID: String?) {
-        guard let id = bundleID else { return }
-        NSRunningApplication.runningApplications(withBundleIdentifier: id).first?.activate()
     }
 
     static func openInCalendar(_ m: Meeting) {

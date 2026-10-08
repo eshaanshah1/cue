@@ -1,7 +1,7 @@
 import AppKit
 import Combine
 
-/// Owns the clock tick and the alert flow: overlay → minimized card → joined → closed.
+/// Owns the clock tick and the alert flow: overlay → minimized card → closed. Joining closes it.
 @MainActor
 final class AppModel: ObservableObject {
     enum Phase: Equatable { case shown, minimized, joined, dismissed, snoozed(Date) }
@@ -17,7 +17,6 @@ final class AppModel: ObservableObject {
     @Published private(set) var now = Clock.now()
     /// The meeting the overlay or card is about.
     @Published private(set) var active: Meeting?
-    @Published private(set) var activeJoined = false
 
     /// Which screen the popover shows.
     enum Route: Equatable { case main, compose, detail(String), edit(String), permission }
@@ -30,7 +29,6 @@ final class AppModel: ObservableObject {
     lazy var card = MiniCardController(model: self)
 
     private var phases: [String: Phase] = [:]
-    private var joinedApp: String?
     private var timer: Timer?
     private var bag = Set<AnyCancellable>()
 
@@ -182,9 +180,8 @@ final class AppModel: ObservableObject {
     }
 
     func present(_ m: Meeting) {
-        if let a = active, a.key != m.key, phases[a.key] != .joined { phases[a.key] = .dismissed }
+        if let a = active, a.key != m.key { phases[a.key] = .dismissed }
         active = m
-        activeJoined = false
         phases[m.key] = .shown
         card.hide()
         overlay.show(m)
@@ -197,10 +194,9 @@ final class AppModel: ObservableObject {
         card.show()
     }
 
-    /// Opens the full overlay again from the card (before joining).
+    /// Opens the full overlay again from the card.
     func expand() {
         guard let m = active else { return }
-        if activeJoined { backToCall(); return }
         phases[m.key] = .shown
         card.hide()
         overlay.show(m)
@@ -220,32 +216,20 @@ final class AppModel: ObservableObject {
         scheduleNextTick()
     }
 
+    /// Opens the call and closes whatever alert is up; nothing follows you into the call.
     func join(_ m: Meeting) {
         guard let link = m.link else { Joiner.openInCalendar(m); return }
-        joinedApp = Joiner.open(link)
+        Joiner.open(link)
         phases[m.key] = .joined
-        if let a = active, a.key != m.key, phases[a.key] != .joined { phases[a.key] = .dismissed }
-        active = m
-        activeJoined = true
-        overlay.hide()
-        card.show()
-        objectWillChange.send()
-    }
-
-    func backToCall() {
-        Joiner.activate(bundleID: joinedApp)
-    }
-
-    func closeCard() {
-        if let m = active, !activeJoined { phases[m.key] = .dismissed }
+        if let a = active, a.key != m.key { phases[a.key] = .dismissed }
         closeActive()
+        objectWillChange.send()
     }
 
     private func closeActive() {
         overlay.hide()
         card.hide()
         active = nil
-        activeJoined = false
     }
 }
 
