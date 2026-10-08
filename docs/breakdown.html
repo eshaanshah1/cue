@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cue — full breakdown</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --blue: #0a6fe0; --purple: #8e3fc4; --orange: #b4660a; --green: #1f8a4c; --red: #d32f2f; --teal: #17798f;
+    --bar: #1a6ff2;
+    --bg: #eef1f7;
+    --fg: rgba(0,0,0,.86); --fg2: rgba(0,0,0,.54); --fg3: rgba(0,0,0,.33);
+    --sep: rgba(0,0,0,.09); --line: rgba(0,0,0,.18);
+    --panel: rgba(255,255,255,.72); --panel-edge: rgba(255,255,255,.8);
+    --chip: rgba(0,0,0,.05); --chip-edge: rgba(0,0,0,.08);
+    --mb: rgba(0,0,0,.85);
+    --shadow: 0 18px 50px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --blue: #4da2ff; --purple: #c98ae8; --orange: #f0a93c; --green: #4ed07f; --red: #ff6b60; --teal: #56c6dc;
+      --bar: #2f87e8;
+      --bg: #0e1118;
+      --fg: rgba(255,255,255,.90); --fg2: rgba(255,255,255,.56); --fg3: rgba(255,255,255,.34);
+      --sep: rgba(255,255,255,.10); --line: rgba(255,255,255,.22);
+      --panel: rgba(38,40,48,.62); --panel-edge: rgba(255,255,255,.14);
+      --chip: rgba(255,255,255,.07); --chip-edge: rgba(255,255,255,.10);
+      --mb: rgba(255,255,255,.92);
+      --shadow: 0 18px 50px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.25);
+    }
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light dark;
+    --blue: #0a6fe0; --purple: #8e3fc4; --orange: #b4660a; --green: #1f8a4c; --red: #d32f2f; --teal: #17798f;
+    --bar: #1a6ff2;
+    --bg: #eef1f7;
+    --fg: rgba(0,0,0,.86); --fg2: rgba(0,0,0,.54); --fg3: rgba(0,0,0,.33);
+    --sep: rgba(0,0,0,.09); --line: rgba(0,0,0,.18);
+    --panel: rgba(255,255,255,.72); --panel-edge: rgba(255,255,255,.8);
+    --chip: rgba(0,0,0,.05); --chip-edge: rgba(0,0,0,.08);
+    --mb: rgba(0,0,0,.85);
+    --shadow: 0 18px 50px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.05);
+  }
+  :root[data-theme="dark"] {
+    --blue: #4da2ff; --purple: #c98ae8; --orange: #f0a93c; --green: #4ed07f; --red: #ff6b60; --teal: #56c6dc;
+    --bar: #2f87e8;
+    --bg: #0e1118;
+    --fg: rgba(255,255,255,.90); --fg2: rgba(255,255,255,.56); --fg3: rgba(255,255,255,.34);
+    --sep: rgba(255,255,255,.10); --line: rgba(255,255,255,.22);
+    --panel: rgba(38,40,48,.62); --panel-edge: rgba(255,255,255,.14);
+    --chip: rgba(255,255,255,.07); --chip-edge: rgba(255,255,255,.10);
+    --mb: rgba(255,255,255,.92);
+    --shadow: 0 18px 50px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "SF Pro Text", -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--fg);
+    background:
+      radial-gradient(120% 70% at 88% -5%, color-mix(in srgb, var(--blue) 22%, transparent) 0%, transparent 55%),
+      radial-gradient(90% 60% at -5% 100%, color-mix(in srgb, var(--purple) 18%, transparent) 0%, transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    line-height: 1.5;
+    padding: 56px 24px 96px;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: .92em; }
+
+  /* ---------- masthead ---------- */
+  .mast { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 14px; }
+  .glyph {
+    width: 60px; height: 60px; border-radius: 15px; flex: none;
+    background: linear-gradient(160deg, #3a9bff, #0a6fe0 55%, #0a53b8);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 8px 22px rgba(10,111,224,.35);
+    display: grid; place-items: center;
+  }
+  .glyph svg { display: block; }
+  h1 { font-family: "SF Pro Display", -apple-system, system-ui; font-size: 38px; font-weight: 700; letter-spacing: -.9px; line-height: 1.05; }
+  .tagline { color: var(--fg2); font-size: 15px; margin-top: 5px; max-width: 58ch; }
+  .meta { color: var(--fg3); font-size: 12.5px; margin-top: 8px; }
+
+  /* ---------- panels ---------- */
+  .panel {
+    background: var(--panel);
+    backdrop-filter: blur(30px) saturate(170%); -webkit-backdrop-filter: blur(30px) saturate(170%);
+    border-radius: 18px;
+    box-shadow: inset 0 0 0 .5px var(--panel-edge), 0 0 0 .5px var(--sep), var(--shadow);
+    padding: 20px 22px 22px;
+  }
+  section { margin-top: 38px; }
+  .shead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .shead .n {
+    font-family: "SF Mono", ui-monospace, monospace; font-size: 11px; font-weight: 600;
+    color: var(--fg3); width: 22px; flex: none; padding-top: 2px;
+  }
+  h2 { font-family: "SF Pro Display", -apple-system, system-ui; font-size: 21px; font-weight: 650; letter-spacing: -.4px; }
+  .sub { color: var(--fg2); font-size: 13.5px; }
+  .shead .sub { margin-left: auto; text-align: right; max-width: 46ch; }
+  p.note { color: var(--fg2); font-size: 13.5px; margin-top: 14px; max-width: 78ch; }
+  p.note + p.note { margin-top: 8px; }
+  b { font-weight: 600; color: var(--fg); }
+  code { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: .9em; background: var(--chip); padding: 1px 5px; border-radius: 5px; }
+
+  /* ---------- stat tiles ---------- */
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--sep); border-radius: 14px; overflow: hidden; margin-top: 26px; }
+  .stat { background: var(--panel); backdrop-filter: blur(30px); padding: 14px 16px; }
+  .stat .v { font-family: "SF Pro Display", system-ui; font-size: 25px; font-weight: 650; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
+  .stat .k { font-size: 11.5px; color: var(--fg2); margin-top: 1px; }
+
+  /* ---------- layer stack ---------- */
+  .tier { display: grid; grid-template-columns: 148px 1fr; gap: 18px; align-items: start; padding: 13px 0; border-top: 1px solid var(--sep); }
+  .tier:first-child { border-top: 0; padding-top: 2px; }
+  .tier .label { font-size: 12.5px; font-weight: 650; padding-top: 4px; }
+  .tier .label .kind { display: block; font-weight: 400; color: var(--fg3); font-size: 11px; letter-spacing: .02em; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-size: 12px; padding: 4px 9px; border-radius: 7px;
+    background: var(--chip); box-shadow: inset 0 0 0 .5px var(--chip-edge);
+    white-space: nowrap;
+  }
+  .pill.lead { font-weight: 600; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .t-ui { --accent: var(--blue); } .t-win { --accent: var(--purple); }
+  .t-state { --accent: var(--orange); } .t-data { --accent: var(--green); } .t-plat { --accent: var(--fg2); }
+  .flowdown { text-align: center; color: var(--fg3); font-size: 11px; letter-spacing: .08em; padding: 4px 0 0 166px; }
+
+  /* ---------- chains ---------- */
+  .chain { display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; }
+  .step {
+    flex: 1 1 0; min-width: 118px;
+    padding: 11px 13px; border-radius: 11px;
+    background: var(--chip); box-shadow: inset 0 0 0 .5px var(--chip-edge);
+  }
+  .step .t { font-size: 12.5px; font-weight: 600; }
+  .step .d { font-size: 11.5px; color: var(--fg2); margin-top: 3px; line-height: 1.35; }
+  .arrow { flex: none; width: 26px; display: grid; place-items: center; color: var(--fg3); font-size: 14px; }
+
+  /* ---------- two-col ---------- */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cols.thirds { grid-template-columns: repeat(3, 1fr); }
+  .card { padding: 15px 16px; border-radius: 13px; background: var(--chip); box-shadow: inset 0 0 0 .5px var(--chip-edge); }
+  .card h3 { font-size: 13.5px; font-weight: 650; display: flex; align-items: center; gap: 7px; }
+  .card h3 .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .card ul { list-style: none; margin-top: 9px; display: grid; gap: 6px; }
+  .card li { font-size: 12.5px; color: var(--fg2); padding-left: 14px; position: relative; line-height: 1.4; }
+  .card li::before { content: "›"; position: absolute; left: 0; color: var(--fg3); }
+
+  /* ---------- tables ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; font-size: 11px; font-weight: 600; color: var(--fg3); letter-spacing: .04em; text-transform: uppercase; padding: 0 12px 7px 0; border-bottom: 1px solid var(--sep); }
+  td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--sep); vertical-align: top; color: var(--fg2); }
+  td:first-child { color: var(--fg); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* ---------- menu bar pills ---------- */
+  .barrow { display: grid; grid-template-columns: 210px 1fr; gap: 16px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--sep); }
+  .barrow:last-child { border-bottom: 0; }
+  .barcell { display: flex; justify-content: flex-end; }
+  .mbi {
+    display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
+    border-radius: 11px; font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums;
+  }
+  .mbi.white { background: rgba(255,255,255,.96); color: #1a1a1a; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.14); }
+  .mbi.orange { background: #ed6b14; color: #fff; font-weight: 600; }
+  .mbi.blue { background: #0a84ff; color: #fff; font-weight: 600; }
+  .mbi.plain { color: var(--mb); padding: 0; }
+  .mbi svg { display: block; }
+  .barwhat { font-size: 12.5px; }
+  .barwhat .k { font-weight: 600; }
+  .barwhat .v { color: var(--fg2); }
+
+  /* ---------- chart ---------- */
+  .chart { display: grid; gap: 5px; margin-top: 4px; }
+  .crow { display: grid; grid-template-columns: 130px 1fr 44px 142px; gap: 12px; align-items: center; position: relative; }
+  .crow .nm { font-size: 12.5px; font-weight: 600; text-align: right; }
+  .track { height: 17px; position: relative; }
+  .fill { height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; }
+  .crow .vl { font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--fg); font-weight: 600; text-align: right; }
+  .crow .rl { font-size: 11.5px; color: var(--fg2); white-space: nowrap; }
+  .crow:hover .fill { background: color-mix(in srgb, var(--bar) 78%, var(--fg)); }
+  .tip {
+    position: absolute; left: 130px; bottom: calc(100% + 6px); z-index: 5;
+    background: var(--panel); backdrop-filter: blur(20px);
+    box-shadow: inset 0 0 0 .5px var(--panel-edge), 0 0 0 .5px var(--sep), var(--shadow);
+    border-radius: 9px; padding: 7px 11px; font-size: 11.5px; color: var(--fg2);
+    white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .12s;
+  }
+  .tip b { color: var(--fg); }
+  .crow:hover .tip { opacity: 1; }
+  .axis { display: grid; grid-template-columns: 130px 1fr 44px 142px; gap: 12px; margin-top: 8px; }
+  .axis .ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--fg3); font-variant-numeric: tabular-nums; border-top: 1px solid var(--sep); padding-top: 4px; }
+
+  /* ---------- parse demo ---------- */
+  .parsebox {
+    font-size: 16px; padding: 13px 15px; border-radius: 10px;
+    background: var(--chip); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--blue) 55%, transparent);
+  }
+  .tok { color: var(--blue); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 11px; font-size: 11.5px; color: var(--fg2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  /* ---------- lanes ---------- */
+  .lanes { margin-top: 2px; }
+  .lane { display: grid; grid-template-columns: 74px 1fr; gap: 12px; align-items: center; height: 26px; }
+  .laneline { position: relative; height: 12px; border-radius: 6px; background: var(--chip); }
+  .busy { position: absolute; top: 0; height: 100%; border-radius: 3px; background: color-mix(in srgb, var(--fg) 26%, transparent); }
+  .slot { position: absolute; top: -4px; height: 20px; border-radius: 5px; background: color-mix(in srgb, var(--green) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 70%, transparent); }
+  .clash { background: color-mix(in srgb, var(--orange) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--orange) 75%, transparent); }
+  .lane .who { font-size: 12px; text-align: right; color: var(--fg2); }
+  .hours { display: grid; grid-template-columns: 74px 1fr; gap: 12px; margin-top: 5px; }
+  .hours .h { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+
+  /* ---------- state machine ---------- */
+  svg.sm { width: 100%; height: auto; display: block; }
+  svg.sm text { font-family: "SF Pro Text", -apple-system, system-ui; fill: var(--fg); }
+  svg.sm .box { fill: var(--chip); stroke: var(--chip-edge); stroke-width: 1; }
+  svg.sm .box.hot { fill: color-mix(in srgb, var(--blue) 13%, transparent); stroke: color-mix(in srgb, var(--blue) 50%, transparent); }
+  svg.sm .box.off { fill: color-mix(in srgb, var(--fg) 5%, transparent); stroke: var(--chip-edge); stroke-dasharray: 4 3; }
+  svg.sm .nm { font-size: 13px; font-weight: 600; text-anchor: middle; }
+  svg.sm .sm2 { font-size: 10.5px; fill: var(--fg3); text-anchor: middle; }
+  svg.sm .edge { fill: none; stroke: var(--line); stroke-width: 1.5; marker-end: url(#ah); }
+  svg.sm .el { font-size: 10.5px; fill: var(--fg2); }
+
+  /* ---------- misc ---------- */
+  .cmds { display: grid; gap: 10px; }
+  .cmd { display: grid; grid-template-columns: 1fr; gap: 3px; padding: 11px 13px; border-radius: 10px; background: var(--chip); box-shadow: inset 0 0 0 .5px var(--chip-edge); }
+  .cmd .c { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; color: var(--fg); }
+  .cmd .w { font-size: 11.5px; color: var(--fg2); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag { font-size: 11.5px; padding: 4px 9px; border-radius: 7px; background: color-mix(in srgb, var(--green) 13%, transparent); box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--green) 40%, transparent); }
+  .lorem { color: var(--fg2); font-size: 13.5px; max-width: 76ch; }
+  .lorem p + p { margin-top: 10px; }
+  .theme {
+    position: fixed; top: 18px; right: 18px; z-index: 20;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11.5px; color: var(--fg2); font-family: inherit;
+    padding: 7px 12px; border-radius: 9px; cursor: pointer;
+    background: var(--panel); backdrop-filter: blur(20px);
+    box-shadow: inset 0 0 0 .5px var(--panel-edge), 0 0 0 .5px var(--sep), var(--shadow);
+  }
+  .theme:hover { color: var(--fg); }
+  @media print { .theme { display: none; } }
+  footer { color: var(--fg3); font-size: 11.5px; margin-top: 40px; text-align: center; }
+
+  @media (max-width: 820px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .cols, .cols.thirds { grid-template-columns: 1fr; }
+    .tier { grid-template-columns: 1fr; gap: 8px; }
+    .flowdown { padding-left: 0; }
+  }
+</style>
+</head>
+<body data-palette="#1a6ff2">
+<button class="theme" type="button" onclick="cueTheme()">◐ <span id="themeName">theme</span></button>
+<div class="wrap">
+
+<div class="mast">
+  <div class="glyph">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+      <rect x="3" y="6" width="28" height="25" rx="6" stroke="#fff" stroke-opacity=".92" stroke-width="2.4"/>
+      <path d="M10 3v6M24 3v6" stroke="#fff" stroke-opacity=".92" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M3 14h28" stroke="#fff" stroke-opacity=".6" stroke-width="2"/>
+      <circle cx="17" cy="22.5" r="4.5" fill="#fff" fill-opacity=".95"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Cue</h1>
+    <div class="tagline">A menu bar calendar for macOS. Shows the next meeting, gets you into the call in one click, and
+      puts a large reminder on screen the minute before it starts.</div>
+    <div class="meta num">11 Swift files · 4,476 lines · no third-party dependencies · Swift 6 toolchain, language mode 5 · macOS 15+ · <code>LSUIElement</code> agent app · v0.1.0</div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="v num">4,476</div><div class="k">lines of Swift</div></div>
+  <div class="stat"><div class="v num">0</div><div class="k">dependencies</div></div>
+  <div class="stat"><div class="v num">1</div><div class="k">timer, app-wide</div></div>
+  <div class="stat"><div class="v num">5</div><div class="k">on-screen surfaces</div></div>
+  <div class="stat"><div class="v num">8</div><div class="k">call services detected</div></div>
+  <div class="stat"><div class="v num">2.4 MB</div><div class="k">signed .app</div></div>
+</div>
+
+<!-- ============ 1. layers ============ -->
+<section>
+  <div class="shead">
+    <div class="n">01</div>
+    <h2>The stack</h2>
+    <div class="sub">Five tiers, each one only talking to the tier below it. <code>CalendarStore</code> is the single source of truth; everything above it is a view of that array.</div>
+  </div>
+  <div class="panel">
+    <div class="tier t-ui">
+      <div class="label">Surfaces<span class="kind">SwiftUI · Views.swift, Compose.swift, Detail.swift</span></div>
+      <div class="pills">
+        <span class="pill lead">PopoverView</span><span class="pill">HeroView</span><span class="pill">RibbonView</span><span class="pill">MeetingRow</span><span class="pill">PeekView</span>
+        <span class="pill lead">OverlayView</span><span class="pill lead">MiniCard</span>
+        <span class="pill lead">ComposeView</span><span class="pill">LanesView</span><span class="pill">TokenField</span><span class="pill">Chip</span><span class="pill">FlowLayout</span>
+        <span class="pill lead">DetailView</span><span class="pill">RSVPControl</span><span class="pill">PeopleList</span><span class="pill lead">EditView</span><span class="pill">PermissionView</span>
+        <span class="pill">SettingsMenu</span><span class="pill">GoogleSignInView</span><span class="pill">AccessView</span>
+      </div>
+    </div>
+    <div class="flowdown">▲ reads state &nbsp;·&nbsp; calls down ▼</div>
+    <div class="tier t-win">
+      <div class="label">Window plumbing<span class="kind">AppKit · Windows.swift</span></div>
+      <div class="pills">
+        <span class="pill lead">StatusItemController</span><span class="pill">BarArt</span>
+        <span class="pill lead">PopoverController</span><span class="pill lead">PeekController</span>
+        <span class="pill lead">OverlayController</span><span class="pill lead">MiniCardController</span>
+        <span class="pill">FloatingPanel</span><span class="pill">ScrimView</span>
+      </div>
+    </div>
+    <div class="tier t-state">
+      <div class="label">State<span class="kind">ObservableObject</span></div>
+      <div class="pills">
+        <span class="pill lead">AppModel</span><span class="pill">Route</span><span class="pill">Phase</span><span class="pill">BarState</span>
+        <span class="pill lead">ComposeModel</span><span class="pill">ParsedEvent</span>
+      </div>
+    </div>
+    <div class="tier t-data">
+      <div class="label">Data &amp; logic<span class="kind">no UI in here</span></div>
+      <div class="pills">
+        <span class="pill lead">CalendarStore</span><span class="pill lead">GoogleAuth</span><span class="pill">LoopbackServer</span><span class="pill">Keychain</span>
+        <span class="pill lead">GoogleCalendarAPI</span><span class="pill">Meeting</span><span class="pill">Person</span>
+        <span class="pill">NLParser</span><span class="pill">LinkDetector</span><span class="pill">Joiner</span><span class="pill">Clock</span><span class="pill">Fmt</span><span class="pill">Snapshot</span>
+      </div>
+    </div>
+    <div class="tier t-plat">
+      <div class="label">Platform<span class="kind">system frameworks only</span></div>
+      <div class="pills">
+        <span class="pill">AppKit</span><span class="pill">SwiftUI</span><span class="pill">Combine</span><span class="pill">EventKit</span>
+        <span class="pill">Network · NWListener</span><span class="pill">Security · Keychain</span><span class="pill">CryptoKit · SHA256</span>
+        <span class="pill">URLSession · ephemeral</span><span class="pill">NSDataDetector</span><span class="pill">ImageRenderer</span>
+      </div>
+    </div>
+  </div>
+  <p class="note">Everything is <code>@MainActor</code>. Network work is <code>async</code> inside <code>Task</code>s that hop back to the main actor
+    to publish; there is no second queue to reason about and no locking anywhere in the codebase.</p>
+</section>
+
+<!-- ============ 2. the one timer ============ -->
+<section>
+  <div class="shead">
+    <div class="n">02</div>
+    <h2>One timer for the whole app</h2>
+    <div class="sub">A menu bar app that ticks every second all day is a battery bug. Cue schedules a single timer at the next minute boundary and re-aims it after every tick.</div>
+  </div>
+  <div class="panel">
+    <div class="chain">
+      <div class="step"><div class="t">Timer fires</div><div class="d">at the minute boundary, <code>tolerance 0.25s</code></div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t"><code>now = Clock.now()</code></div><div class="d">wall clock plus a demo offset</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t"><code>store.tick(now:)</code></div><div class="d">poll Google if 180s stale, or reload EventKit at day rollover</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t"><code>evaluateAlerts()</code></div><div class="d">close a finished alert, raise the next one</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t"><code>scheduleNextTick()</code></div><div class="d">next minute, or a sooner snooze deadline</div></div>
+    </div>
+    <div class="cols" style="margin-top:16px">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Also kicks the tick</h3>
+        <ul>
+          <li><code>NSWorkspace.didWakeNotification</code> → refresh with age 0, then tick</li>
+          <li><code>store.$meetings</code> changing → tick, so the menu bar repaints</li>
+          <li>Opening the popover → <code>refreshIfStale(60)</code></li>
+          <li><code>.EKEventStoreChanged</code> → reload, macOS source only</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--orange)"></span>The only per-second work</h3>
+        <ul>
+          <li><code>TimelineView(.periodic, by: 1)</code> inside the overlay countdown ring</li>
+          <li>The same, inside the mini card — and only while it is visible</li>
+          <li>The status item image is redrawn only when <code>BarState</code> actually differs from the last one rendered</li>
+          <li>The popover's SwiftUI tree is built on open and dropped on close, so nothing sits in memory while hidden</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. alert lifecycle ============ -->
+<section>
+  <div class="shead">
+    <div class="n">03</div>
+    <h2>The alert flow</h2>
+    <div class="sub">One phase per meeting, held in <code>[String: Phase]</code> keyed by <code>id|start</code> so a recurring event gets a fresh phase each occurrence.</div>
+  </div>
+  <div class="panel">
+    <svg class="sm" viewBox="0 0 980 330" role="img" aria-label="State machine: idle to shown to minimized or joined, then dismissed, with a snoozed loop">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--line)"/>
+        </marker>
+      </defs>
+
+      <rect class="box off" x="14" y="140" width="130" height="50" rx="12"/>
+      <text class="nm" x="79" y="162">no phase</text>
+      <text class="sm2" x="79" y="178">nothing on screen</text>
+
+      <rect class="box hot" x="236" y="140" width="130" height="50" rx="12"/>
+      <text class="nm" x="301" y="162">.shown</text>
+      <text class="sm2" x="301" y="178">80% overlay + scrim</text>
+
+      <rect class="box" x="236" y="26" width="130" height="50" rx="12"/>
+      <text class="nm" x="301" y="48">.snoozed(+60s)</text>
+      <text class="sm2" x="301" y="64">screen clear</text>
+
+      <rect class="box" x="470" y="40" width="130" height="50" rx="12"/>
+      <text class="nm" x="535" y="62">.minimized</text>
+      <text class="sm2" x="535" y="78">floating mini card</text>
+
+      <rect class="box" x="470" y="240" width="130" height="50" rx="12"/>
+      <text class="nm" x="535" y="262">.joined</text>
+      <text class="sm2" x="535" y="278">card + “Back to call”</text>
+
+      <rect class="box off" x="810" y="140" width="130" height="50" rx="12"/>
+      <text class="nm" x="875" y="162">.dismissed</text>
+      <text class="sm2" x="875" y="178">never raised again</text>
+
+      <path class="edge" d="M144 165 H228"/>
+      <text class="el" x="158" y="157">T−60s</text>
+
+      <path class="edge" d="M366 158 C 416 150, 430 100, 464 83"/>
+      <text class="el" x="382" y="126">esc · click out · focus lost</text>
+
+      <path class="edge" d="M366 174 C 416 186, 430 230, 464 248"/>
+      <text class="el" x="388" y="222">Join</text>
+
+      <path class="edge" d="M535 90 V 234"/>
+      <text class="el" x="543" y="168">Join</text>
+
+      <path class="edge" d="M470 50 C 428 18, 400 96, 368 136"/>
+      <text class="el" x="400" y="40">tap the card</text>
+
+      <path class="edge" d="M284 140 V 82"/>
+      <text class="el" x="176" y="116">Snooze</text>
+
+      <path class="edge" d="M318 82 V 136"/>
+      <text class="el" x="326" y="112">after 60s</text>
+
+      <path class="edge" d="M600 62 C 700 70, 760 120, 804 152"/>
+      <text class="el" x="640" y="100">✕ on the card</text>
+
+      <path class="edge" d="M600 262 C 700 254, 760 208, 804 178"/>
+      <text class="el" x="628" y="246">meeting ends · ✕</text>
+    </svg>
+    <div class="cols thirds" style="margin-top:18px">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>What raises it</h3>
+        <ul>
+          <li>Only meetings that actually have a call link</li>
+          <li>Window is <code>start − 60s</code> to <code>start + 5min</code></li>
+          <li>One at a time: a new alert marks the previous one dismissed unless it was joined</li>
+          <li>Off entirely if <code>alertsEnabled</code> is false</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--purple)"></span>Minimize vs dismiss</h3>
+        <ul>
+          <li><b>Minimize</b> keeps the meeting alive as a draggable card — esc, a click on the scrim, or losing focus to another app all mean this</li>
+          <li><b>Dismiss</b> is the only way to silence it for good</li>
+          <li>The overlay leaves the menu bar uncovered and sits one level below <code>.statusBar</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Joining</h3>
+        <ul>
+          <li><code>Joiner.open</code> records which app handled the URL, so “Back to call” can re-activate it</li>
+          <li>Zoom links are rewritten to <code>zoommtg://</code> when the native app is installed, skipping the browser hop</li>
+          <li>No link? Falls through to opening the event in Google Calendar or Calendar.app</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. menu bar ============ -->
+<section>
+  <div class="shead">
+    <div class="n">04</div>
+    <h2>The menu bar item</h2>
+    <div class="sub">Not a label — a <code>NSImage</code> drawn by hand in <code>BarArt</code>: a filled capsule, a glyph or a progress ring, and monospaced-digit text.</div>
+  </div>
+  <div class="panel">
+    <div class="barrow">
+      <div class="barcell"><span class="mbi plain"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1.4" y="3" width="13.2" height="11.6" rx="2.6" stroke="currentColor" stroke-width="1.3"/><path d="M4.6 1.6v2.6M11.4 1.6v2.6M1.4 6.6h13.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span></div>
+      <div class="barwhat"><span class="k">.idle</span> — <span class="v">nothing left today, or nothing within reach. Plain SF Symbol template, so it follows the menu bar tint.</span></div>
+    </div>
+    <div class="barrow">
+      <div class="barcell"><span class="mbi white"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1.4" y="3" width="13.2" height="11.6" rx="2.6" stroke="currentColor" stroke-width="1.5"/><path d="M4.6 1.6v2.6M11.4 1.6v2.6M1.4 6.6h13.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Standup at 10:30</span></div>
+      <div class="barwhat"><span class="k">.later(m)</span> — <span class="v">more than an hour away, still today. Title clipped to whole words under ~18 characters.</span></div>
+    </div>
+    <div class="barrow">
+      <div class="barcell"><span class="mbi white"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="2.2"/><path d="M8 1.4 A6.6 6.6 0 0 1 14.6 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Standup in 42m</span></div>
+      <div class="barwhat"><span class="k">.soon(m, 42)</span> — <span class="v">inside the hour. The ring fills as <code>minutes / 60</code>.</span></div>
+    </div>
+    <div class="barrow">
+      <div class="barcell"><span class="mbi orange"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2.2"/><path d="M8 1.4 A6.6 6.6 0 0 1 9.9 1.7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>Standup in 7m</span></div>
+      <div class="barwhat"><span class="k">.soon</span>, under <code>soonMinutes = 10</code> — <span class="v">the capsule turns orange.</span></div>
+    </div>
+    <div class="barrow">
+      <div class="barcell"><span class="mbi blue"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M1.6 4.6a1.6 1.6 0 0 1 1.6-1.6h5.4a1.6 1.6 0 0 1 1.6 1.6v6.8a1.6 1.6 0 0 1-1.6 1.6H3.2a1.6 1.6 0 0 1-1.6-1.6V4.6Z" fill="#fff"/><path d="M11.4 7.4 14.4 5v6l-3-2.4v-1.2Z" fill="#fff"/></svg>Join Standup</span></div>
+      <div class="barwhat"><span class="k">.join(m)</span> — <span class="v"><code>T−60s</code> to <code>T+5min</code>. A plain left-click <b>joins the call directly</b>; hold ⌥ to open the popover instead.</span></div>
+    </div>
+    <div class="barrow">
+      <div class="barcell"><span class="mbi white"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="2.2"/><path d="M8 1.4 A6.6 6.6 0 1 1 2.2 11.6" fill="none" stroke="#0a84ff" stroke-width="2.2" stroke-linecap="round"/></svg>12m left</span></div>
+      <div class="barwhat"><span class="k">.during(m, 12)</span> — <span class="v">in progress. The ring is elapsed fraction, quantised to 1/50ths so the image is redrawn at most 50 times per meeting.</span></div>
+    </div>
+    <div class="barrow">
+      <div class="barcell"><span class="mbi orange"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2.2"/><path d="M8 1.4 A6.6 6.6 0 1 1 1.6 9.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>2m left</span></div>
+      <div class="barwhat"><span class="k">.during</span>, under <code>wrapUpMinutes = 3</code> — <span class="v">orange, matching the mini card's wrap-up state.</span></div>
+    </div>
+    <p class="note">The whole thing degrades gracefully: if a menu bar manager like Ice or Bartender hides the item, or the notch pushes it
+      off-screen, <code>PopoverController</code> notices the anchor isn't in the menu bar and opens at the top-right of the screen instead.</p>
+  </div>
+</section>
+
+<!-- ============ 5. surfaces ============ -->
+<section>
+  <div class="shead">
+    <div class="n">05</div>
+    <h2>Five surfaces</h2>
+    <div class="sub">All of them are borderless <code>NSPanel</code>s — <code>FloatingPanel</code> — that can take keyboard focus without activating the app, Spotlight-style.</div>
+  </div>
+  <div class="panel">
+    <table>
+      <thead><tr><th>Surface</th><th>Window level</th><th>Size</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Status item</td><td>—</td><td>variable length</td>
+          <td>Hand-drawn capsule; redrawn only on a <code>BarState</code> change. Left-click joins when a call is due, otherwise toggles the popover.</td>
+        </tr>
+        <tr>
+          <td>Popover</td><td><code>.popUpMenu</code></td><td>340 wide on the main route, 360 on the rest; height fits content</td>
+          <td>Hung under the status item, clamped into the visible frame. Closes when it loses key, except while a chip's <code>NSMenu</code> is tracking. <b>esc</b> steps back one route before it closes.</td>
+        </tr>
+        <tr>
+          <td>Hover peek</td><td><code>.popUpMenu</code>, non-keyable</td><td>fits content</td>
+          <td><code>ignoresMouseEvents</code>, so running down the list just slides the card along. 0.35s to appear, 0.12s grace on leaving. Sits left of the popover, flips right if there's no room.</td>
+        </tr>
+        <tr>
+          <td>Overlay</td><td><code>.statusBar − 1</code></td><td>80% × 88% of the screen under the mouse, inset 10% / 6%</td>
+          <td>A separate <code>NSVisualEffectView</code> scrim panel behind it, <code>.fullScreenUI</code> blurring what's behind the window. Menu bar deliberately left uncovered. Click the scrim, press esc, or lose focus → minimize.</td>
+        </tr>
+        <tr>
+          <td>Mini card</td><td><code>.floating</code>, non-keyable</td><td>364 wide</td>
+          <td><code>WindowDragGesture</code>; the origin is saved to <code>UserDefaults</code> and restored only if it still lands on a connected screen. <code>.stationary</code> and <code>.canJoinAllSpaces</code>, so it follows you across spaces.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">Fades are 0.18s in and 0.14s out, and both collapse to zero when
+      <code>accessibilityDisplayShouldReduceMotion</code> is set. Shadows are invalidated a run-loop hop after the first layout,
+      which is the fix for AppKit drawing a stale shadow around a freshly-sized SwiftUI panel.</p>
+  </div>
+</section>
+
+<!-- ============ 6. popover routes ============ -->
+<section>
+  <div class="shead">
+    <div class="n">06</div>
+    <h2>Inside the popover</h2>
+    <div class="sub">One enum drives the whole thing. The compose draft is the only route whose state survives the popover closing.</div>
+  </div>
+  <div class="panel">
+    <div class="chain">
+      <div class="step"><div class="t">.main</div><div class="d">hero + today's ribbon + “Later today” and “Tomorrow”</div></div>
+      <div class="arrow">⇄</div>
+      <div class="step"><div class="t">.detail(key)</div><div class="d">times, room, link, notes, RSVP, the full guest list</div></div>
+      <div class="arrow">⇄</div>
+      <div class="step"><div class="t">.edit(key)</div><div class="d">title, day, start, length, guests, delete</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">.compose</div><div class="d">one text field, parsed live, with per-person lanes</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">.permission</div><div class="d">shown whenever a write needs a scope you haven't granted</div></div>
+    </div>
+    <div class="cols" style="margin-top:16px">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>What the hero picks</h3>
+        <ul>
+          <li>A meeting starting within 15 minutes beats one already in progress</li>
+          <li>Otherwise the latest-started live meeting wins</li>
+          <li>With nothing left: “No more meetings today / Enjoy the quiet.”</li>
+          <li>The access state short-circuits all of it — <code>.denied</code>, <code>.unknown</code> and <code>.needsGoogle</code> each have their own screen</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--purple)"></span>Keyboard</h3>
+        <ul>
+          <li><code>⌘N</code> — new event</li>
+          <li><code>esc</code> — back one route, then close</li>
+          <li><code>⌘↩</code> / <code>↩</code> — create or save, from inside the text field</li>
+          <li>Focus rings are disabled throughout; the hints are drawn as <code>KeyHint</code> pills instead</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. compose ============ -->
+<section>
+  <div class="shead">
+    <div class="n">07</div>
+    <h2>Adding an event is one text field</h2>
+    <div class="sub">No form. You type a sentence, Cue tints the parts it understood, and everything else is a chip you can correct.</div>
+  </div>
+  <div class="panel">
+    <div class="parsebox">Design sync <span style="color:var(--fg3)">with</span> <span class="tok">Priya</span> <span class="tok">tomorrow at 3pm</span> <span class="tok">45m</span></div>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--blue)"></span>understood, and removed from the title</span>
+      <span>→ title <b>“Design sync”</b></span>
+      <span>→ guest <b>priya.shah@…</b></span>
+      <span>→ start <b>tomorrow 15:00</b></span>
+      <span>→ length <b>45 min</b></span>
+    </div>
+    <div class="chain" style="margin-top:18px">
+      <div class="step"><div class="t">1 · durations</div><div class="d"><code>45m</code>, <code>1.5 hrs</code>, <code>half an hour</code>, <code>an hour</code></div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">2 · emails</div><div class="d">matched against your contacts, else taken as-is</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">3 · the date</div><div class="d"><code>NSDataDetector</code> over the text with steps 1–2 <b>blanked out</b></div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">4 · names</div><div class="d">words after <code>with</code>, two-word then one-word, against recent contacts</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">5 · the title</div><div class="d">what's left, with dangling connectors trimmed</div></div>
+    </div>
+    <p class="note"><b>Order is the whole trick.</b> Durations and emails are masked out before the date detector runs, so
+      <code>45m</code> is read as a length and not as 45 minutes past the hour, and <code>name@host.com</code> doesn't look like a date.
+      A name after <code>with</code> that matches nobody lands in <code>unknownNames</code> and the UI asks for their email rather than
+      silently dropping it — and only the first word of each name slot counts, so “with Sanket about Q4” asks about Sanket, not about Q4.</p>
+    <p class="note">A typed time already in the past rolls to tomorrow unless you said “today”. With no time at all, the day is today
+      before 17:00 and tomorrow after. Suggestions are quarter-hour starts only.</p>
+  </div>
+</section>
+
+<!-- ============ 8. find a time ============ -->
+<section>
+  <div class="shead">
+    <div class="n">08</div>
+    <h2>Find a time</h2>
+    <div class="sub">Google's free/busy endpoint, one lane per invitee plus yours. Busy blocks are merged, then the gaps long enough for the meeting are the candidates.</div>
+  </div>
+  <div class="panel">
+    <div class="lanes">
+      <div class="lane"><div class="who">You</div><div class="laneline">
+        <div class="busy" style="left:15%;width:2.5%"></div><div class="busy" style="left:60%;width:10%"></div></div></div>
+      <div class="lane"><div class="who">Priya</div><div class="laneline">
+        <div class="busy" style="left:5%;width:12.5%"></div><div class="busy" style="left:60%;width:10%"></div><div class="busy" style="left:80%;width:10%"></div></div></div>
+      <div class="lane"><div class="who">Rahul</div><div class="laneline">
+        <div class="busy" style="left:15%;width:2.5%"></div><div class="busy" style="left:20%;width:10%"></div><div class="busy" style="left:45%;width:5%"></div><div class="busy" style="left:75%;width:10%"></div></div></div>
+      <div class="lane"><div class="who">you asked</div><div class="laneline">
+        <div class="slot clash" style="left:60%;width:7.5%"></div></div></div>
+      <div class="lane"><div class="who">Cue picks</div><div class="laneline">
+        <div class="slot" style="left:52.5%;width:7.5%"></div></div></div>
+    </div>
+    <div class="hours"><div></div><div class="h"><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span><span>17:00</span><span>19:00</span></div></div>
+    <div class="legend" style="margin-top:12px">
+      <span><span class="swatch" style="background:color-mix(in srgb, var(--fg) 26%, transparent)"></span>busy</span>
+      <span><span class="swatch clash" style="background:color-mix(in srgb, var(--orange) 45%, transparent)"></span>3pm clashes with You and Priya</span>
+      <span><span class="swatch" style="background:color-mix(in srgb, var(--green) 45%, transparent)"></span>14:15 — the closest 45-minute gap</span>
+    </div>
+    <div class="cols thirds" style="margin-top:18px">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Picking the slot</h3>
+        <ul>
+          <li>Working hours are 09:00–19:00, never earlier than <code>now</code> rounded up to the quarter</li>
+          <li>Each free stretch yields its first quarter-hour start, <b>and</b> — when you asked for a time — the latest start that still fits, which is usually the closer answer</li>
+          <li>Sorted by distance from what you asked for; the top three are offered</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--orange)"></span>Keeping it cheap</h3>
+        <ul>
+          <li>Queries are debounced 250 ms, so typing doesn't fire a request per keystroke</li>
+          <li>Results cached 5 minutes per <code>calendar|day</code></li>
+          <li>The in-flight task is cancelled when the lane set or the day changes</li>
+          <li>A lane Google won't share is marked <code>unavailable</code> and excluded from the merge rather than treated as free</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>Where the names come from</h3>
+        <ul>
+          <li>Attendees of your own meetings, −60 days to +14 days</li>
+          <li>Counted by how often you meet them, most frequent first</li>
+          <li>Rooms, resources and yourself filtered out</li>
+          <li>Refreshed at most once every 12 hours, on a trimmed <code>fields=attendees(...)</code> request</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. data sources ============ -->
+<section>
+  <div class="shead">
+    <div class="n">09</div>
+    <h2>Where meetings come from</h2>
+    <div class="sub">Two interchangeable sources behind one <code>@Published [Meeting]</code>. The rest of the app can't tell which is live.</div>
+  </div>
+  <div class="cols">
+    <div class="panel">
+      <div class="card" style="background:transparent;box-shadow:none;padding:0">
+        <h3><span class="dot" style="background:var(--blue)"></span>Google Calendar — the default</h3>
+        <ul>
+          <li><code>calendarList</code>, paged at 250, then the calendars ticked in Google's own sidebar — with a per-calendar override in Cue's settings</li>
+          <li>Events fetched <b>in parallel</b> via a <code>ThrowingTaskGroup</code>, results re-sorted into a deterministic order with your primary calendar first</li>
+          <li>De-duplicated on <code>iCalUID|start</code>, so an event on two calendars keeps your own calendar's colour</li>
+          <li>Window is <code>startOfDay(today)</code> → +2 days, <code>singleEvents=true</code> so recurrences arrive expanded</li>
+          <li>Polled every <b>180 s</b>, plus on wake, plus on popover open if older than 60 s</li>
+          <li>Write path: create, patch, delete and RSVP, all with <code>sendUpdates=all</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="card" style="background:transparent;box-shadow:none;padding:0">
+        <h3><span class="dot" style="background:var(--purple)"></span>macOS Calendar — opt-in from the gear menu</h3>
+        <ul>
+          <li><code>EKEventStore.requestFullAccessToEvents</code>, same two-day window via <code>predicateForEvents</code></li>
+          <li><b>No polling at all</b> — reloads only on <code>.EKEventStoreChanged</code> or at the day rollover</li>
+          <li>Colour comes from the <code>EKCalendar</code>; links are sniffed out of the URL, location and notes</li>
+          <li>Read-only: no create, edit, RSVP or find-a-time, since those are built on Google's API</li>
+          <li>Whatever Internet Accounts syncs is what you get — Exchange, iCloud, a subscribed ICS</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <div class="shead" style="margin-bottom:10px"><div class="n">↓</div><h2 style="font-size:16px">What never reaches the list</h2></div>
+    <div class="pills">
+      <span class="pill">all-day events</span><span class="pill">cancelled</span><span class="pill">anything you declined</span>
+      <span class="pill">working-location blocks</span><span class="pill">out-of-office</span><span class="pill">duplicate copies across calendars</span>
+      <span class="pill">locations that are really “Microsoft Teams Meeting”</span>
+    </div>
+    <p class="note">Meetings are compared field-by-field before publishing, so a poll that returns identical data doesn't
+      touch <code>@Published</code> and doesn't repaint anything. On a network error the last good list is kept and the next
+      attempt is pulled in to a minute from now instead of waiting out the full poll interval.</p>
+  </div>
+</section>
+
+<!-- ============ 10. auth ============ -->
+<section>
+  <div class="shead">
+    <div class="n">10</div>
+    <h2>Sign-in, by hand</h2>
+    <div class="sub">OAuth for installed apps: a browser round-trip, a loopback redirect, PKCE. No Google SDK, no embedded web view.</div>
+  </div>
+  <div class="panel">
+    <div class="chain">
+      <div class="step"><div class="t">1 · listen</div><div class="d"><code>NWListener</code> on 127.0.0.1, OS-assigned port, loopback interface only</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">2 · challenge</div><div class="d">32 random bytes from <code>SecRandomCopyBytes</code>, SHA-256, base64url — <code>S256</code></div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">3 · consent</div><div class="d">the real Google page, in the real browser, with the real URL bar</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">4 · redirect</div><div class="d">code + state arrive on the loopback socket; the listener answers with a styled “you're signed in” page</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">5 · exchange</div><div class="d"><code>state</code> compared, then code + verifier swapped for tokens</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="t">6 · store</div><div class="d">refresh token to the Keychain, access token to memory</div></div>
+    </div>
+    <div class="cols" style="margin-top:18px">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Kept off disk on purpose</h3>
+        <ul>
+          <li><code>URLSessionConfiguration.ephemeral</code>, <code>urlCache = nil</code> — no response cache, no cookie jar, 20 s timeout</li>
+          <li>Refresh token in the Keychain as <code>kSecAttrAccessibleAfterFirstUnlock</code>, service <code>com.eshaanshah.cue.google</code></li>
+          <li>Access token lives only in memory, and expires 60 s early so a request never races the boundary</li>
+          <li>Every response is trimmed with a <code>fields=</code> mask, so a poll is a few KB rather than a few hundred</li>
+          <li>Signing out revokes the token at Google <b>and</b> deletes the Keychain item</li>
+          <li>The <code>id_token</code> payload is read without verifying the signature — it came straight from Google over TLS, and it is only used for the account label</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--orange)"></span>What can go wrong, and what you see</h3>
+        <ul>
+          <li><code>invalid_grant</code> → <code>.expired</code>: the Keychain item is dropped and the popover asks you to sign in again</li>
+          <li><code>403 insufficient scope</code> → <code>.needsWriteAccess</code>, routing straight to <code>PermissionView</code></li>
+          <li>Granted scopes are remembered, so an older read-only sign-in is detected before a write is attempted rather than after it fails</li>
+          <li>Anything else offline-ish: the current list stands and the retry is pulled forward to a minute</li>
+          <li>While the Google Cloud project is in Testing, Google forces a re-consent every 7 days — a platform limit, not a bug</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tags">
+      <span class="tag">scope · calendar.events</span>
+      <span class="tag">scope · calendar.readonly</span>
+      <span class="tag">scope · email</span>
+      <span class="tag">read-only until you first add or edit</span>
+      <span class="tag">google-oauth.json is git-ignored</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11. writes ============ -->
+<section>
+  <div class="shead">
+    <div class="n">11</div>
+    <h2>Writing back</h2>
+    <div class="sub">Four operations, one gate. Every one of them funnels through <code>CalendarStore.write</code>, which checks the scope, then forces a refetch so the UI can't drift from Google.</div>
+  </div>
+  <div class="panel">
+    <table>
+      <thead><tr><th>Operation</th><th>Request</th><th>Care taken</th></tr></thead>
+      <tbody>
+        <tr><td>create</td><td><code>POST /events</code></td><td>Google Meet asked for via <code>conferenceData.createRequest</code> with a fresh request id; <code>conferenceDataVersion=1</code></td></tr>
+        <tr><td>edit</td><td><code>PATCH /events/{id}</code></td><td>Only keys that actually changed are sent — title, start/end, description, attendees — diffed against the meeting you opened</td></tr>
+        <tr><td>RSVP</td><td><code>PATCH</code> attendees</td><td>Google wants the whole guest list back, so it is rewritten with <b>only your own</b> <code>responseStatus</code> touched — and rooms stay in the list, so replying never cancels the room booking</td></tr>
+        <tr><td>delete</td><td><code>DELETE /events/{id}</code></td><td>Removed from the local list first so the popover reacts instantly, then confirmed against the server</td></tr>
+      </tbody>
+    </table>
+    <p class="note">All four pass <code>sendUpdates=all</code>, so guests get the mail Google would normally send. <code>canModify</code> is computed per meeting
+      from the calendar's <code>accessRole</code> plus whether you organise it or <code>guestsCanModify</code> is set — the edit button
+      simply isn't there when it would fail.</p>
+  </div>
+</section>
+
+<!-- ============ 12. chart ============ -->
+<section>
+  <div class="shead">
+    <div class="n">12</div>
+    <h2>Where the 4,476 lines sit</h2>
+    <div class="sub">Two thirds of the codebase is the interface. The calendar logic — fetching, parsing, scheduling, auth — is about 1,300 lines.</div>
+  </div>
+  <div class="panel">
+    <div class="chart">
+      <div class="crow"><div class="nm">Views.swift</div><div class="track"><div class="fill" style="width:90.7%"></div></div><div class="vl num">907</div><div class="rl">popover, overlay, card</div><div class="tip"><b>Views.swift · 907 lines</b> — 20.3% of the codebase</div></div>
+      <div class="crow"><div class="nm">Compose.swift</div><div class="track"><div class="fill" style="width:82.9%"></div></div><div class="vl num">829</div><div class="rl">parser, draft, lanes</div><div class="tip"><b>Compose.swift · 829 lines</b> — 18.5% of the codebase</div></div>
+      <div class="crow"><div class="nm">Detail.swift</div><div class="track"><div class="fill" style="width:56.0%"></div></div><div class="vl num">560</div><div class="rl">details, edit, RSVP</div><div class="tip"><b>Detail.swift · 560 lines</b> — 12.5% of the codebase</div></div>
+      <div class="crow"><div class="nm">Windows.swift</div><div class="track"><div class="fill" style="width:49.3%"></div></div><div class="vl num">493</div><div class="rl">panels, status item</div><div class="tip"><b>Windows.swift · 493 lines</b> — 11.0% of the codebase</div></div>
+      <div class="crow"><div class="nm">CalendarStore.swift</div><div class="track"><div class="fill" style="width:37.1%"></div></div><div class="vl num">371</div><div class="rl">the source of truth</div><div class="tip"><b>CalendarStore.swift · 371 lines</b> — 8.3% of the codebase</div></div>
+      <div class="crow"><div class="nm">GoogleAuth.swift</div><div class="track"><div class="fill" style="width:36.2%"></div></div><div class="vl num">362</div><div class="rl">PKCE + Keychain</div><div class="tip"><b>GoogleAuth.swift · 362 lines</b> — 8.1% of the codebase</div></div>
+      <div class="crow"><div class="nm">AppModel.swift</div><div class="track"><div class="fill" style="width:29.2%"></div></div><div class="vl num">292</div><div class="rl">clock, routes, phases</div><div class="tip"><b>AppModel.swift · 292 lines</b> — 6.5% of the codebase</div></div>
+      <div class="crow"><div class="nm">GoogleCalendar.swift</div><div class="track"><div class="fill" style="width:28.9%"></div></div><div class="vl num">289</div><div class="rl">REST client, decoders</div><div class="tip"><b>GoogleCalendar.swift · 289 lines</b> — 6.5% of the codebase</div></div>
+      <div class="crow"><div class="nm">Meeting.swift</div><div class="track"><div class="fill" style="width:19.4%"></div></div><div class="vl num">194</div><div class="rl">model, links, joining</div><div class="tip"><b>Meeting.swift · 194 lines</b> — 4.3% of the codebase</div></div>
+      <div class="crow"><div class="nm">Snapshot.swift</div><div class="track"><div class="fill" style="width:12.9%"></div></div><div class="vl num">129</div><div class="rl">offscreen renders</div><div class="tip"><b>Snapshot.swift · 129 lines</b> — 2.9% of the codebase</div></div>
+      <div class="crow"><div class="nm">main.swift</div><div class="track"><div class="fill" style="width:5.0%"></div></div><div class="vl num">50</div><div class="rl">delegate, launch flags</div><div class="tip"><b>main.swift · 50 lines</b> — 1.1% of the codebase</div></div>
+    </div>
+    <div class="axis"><div></div><div class="ticks"><span>0</span><span>250</span><span>500</span><span>750</span><span>1,000</span></div><div></div><div></div></div>
+  </div>
+</section>
+
+<!-- ============ 13. build ============ -->
+<section>
+  <div class="shead">
+    <div class="n">13</div>
+    <h2>Build, demo, snapshot</h2>
+    <div class="sub">A 21-line shell script instead of an Xcode project. The two debug modes exist so the UI can be checked without waiting for a real meeting.</div>
+  </div>
+  <div class="panel">
+    <div class="cmds">
+      <div class="cmd"><div class="c">./build.sh</div><div class="w">Release build, stripped, <code>Info.plist</code> and <code>Cue.icns</code> copied in, <code>google-oauth.json</code> folded into Resources, ad-hoc signed → <b>build/Cue.app, 2.4 MB</b>. Warns rather than fails when the OAuth client is missing.</div></div>
+      <div class="cmd"><div class="c">open -n build/Cue.app --args --demo 10:18 --show popover</div><div class="w">Demo mode: nine fixed meetings matching the design boards, <code>Clock.offset</code> pretending it's 10:18, synthetic free/busy for Priya and Rahul, and <code>Joiner.dryRun</code> so no real call link is ever opened. The Keychain is never touched, so there's no prompt.</div></div>
+      <div class="cmd"><div class="c">open -n build/Cue.app --args --demo 10:29:10</div><div class="w">Sits 50 seconds before standup, so the overlay fires on its own and the whole alert flow can be watched end to end.</div></div>
+      <div class="cmd"><div class="c">.build/debug/Cue --demo --snapshot snaps</div><div class="w">Renders every surface offscreen through <code>ImageRenderer</code> at 2×, in light <b>and</b> dark, onto the mockups' gradient backdrop, then <code>exit(0)</code>. Twenty-two PNGs, no window ever shown — this is how the build is checked against <code>mockups/</code>.</div></div>
+      <div class="cmd"><div class="c">ditto build/Cue.app /Applications/Cue.app</div><div class="w">Install. Because the signature is ad-hoc, macOS re-asks for Keychain and calendar access after each rebuild — answer Always Allow.</div></div>
+    </div>
+    <p class="note">The snapshot path is worth noting as a design decision: rather than screenshot a running app, the same SwiftUI views are
+      rendered headless at a frozen clock. That makes every state — including ones that only exist for 60 seconds — reviewable in a diff.</p>
+  </div>
+</section>
+
+<!-- ============ 14. notes ============ -->
+<section>
+  <div class="shead">
+    <div class="n">14</div>
+    <h2>Notes</h2>
+    <div class="sub">Placeholder copy — swap for release notes, open questions, or whatever this section should actually hold.</div>
+  </div>
+  <div class="panel">
+    <div class="lorem">
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
+        aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+      <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut
+        perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque
+        ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+      <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos
+        qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
+        adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Cue 0.1.0 · breakdown generated from the working tree at <span class="mono">bd0423c</span> · <span class="num">4,476</span> lines of Swift across 11 files</footer>
+</div>
+<script>
+  // Explicit light/dark so the page can be reviewed in both without changing the OS.
+  function cueTheme(next) {
+    const now = document.documentElement.dataset.theme
+      || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const to = next || (now === "dark" ? "light" : "dark");
+    document.documentElement.dataset.theme = to;
+    document.getElementById("themeName").textContent = to;
+  }
+  cueTheme(new URLSearchParams(location.search).get("theme")
+    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+</script>
+</body>
+</html>
