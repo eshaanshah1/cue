@@ -35,9 +35,12 @@ struct DetailView: View {
 
             if let link = meeting.link {
                 Button { close(); model.join(meeting) } label: {
-                    Label("Join \(link.service)", systemImage: "video.fill").labelStyle(TightLabel())
+                    HStack(spacing: 6) {
+                        CallIcon(kind: link.kind, size: 16)
+                        Text("Join \(link.service)")
+                    }
                 }
-                .buttonStyle(JoinStyle(height: 30, size: 13, padding: 14))
+                .buttonStyle(JoinStyle(height: 30, size: 13, padding: 14, tint: link.kind.color))
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
             }

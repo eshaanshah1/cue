@@ -41,6 +41,9 @@ enum Snapshot {
         at("10:29:18")
         let standup = store.meetings[2]
         save("overlay", size: CGSize(width: 1280, height: 776), OverlayView(meeting: standup))
+        at("10:59:18")
+        save("overlay-zoom", size: CGSize(width: 1280, height: 776), OverlayView(meeting: store.meetings[3]))
+        at("10:29:18")
 
         // Mini card states.
         showsHover = true

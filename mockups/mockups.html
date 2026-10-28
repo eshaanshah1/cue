@@ -82,8 +82,8 @@
   .hero .grow { flex: 1; min-width: 0; }
   .btn-join {
     display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 16px;
-    background: var(--blue); color: white; font-size: 13px; font-weight: 600;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 3px rgba(10,132,255,.35);
+    background: var(--join, var(--blue)); color: white; font-size: 13px; font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 3px color-mix(in srgb, var(--join, var(--blue)) 35%, transparent);
   }
   .ribbon { margin: 0 16px; position: relative; height: 40px; }
   .ribbon .track { position: absolute; left: 0; right: 0; top: 0; height: 18px; border-radius: 6px; background: var(--fg4); }
@@ -273,6 +273,26 @@
   .peek .who .avs i:first-child { margin-left: 0; }
   .peek .nt { font-size: 12px; line-height: 1.4; color: var(--fg2); margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--sep);
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ---------- join colour by service + call codes ---------- */
+  .pill { background: var(--join, var(--blue)); }
+  .codes { display: flex; gap: 10px; margin-top: 18px; }
+  .code { height: 38px; padding: 0 12px 0 14px; border-radius: 19px; background: var(--fg4); display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .code .cl { color: var(--fg2); }
+  .code .cv { font-size: 16px; font-weight: 600; letter-spacing: .2px; color: var(--fg); }
+  .code svg { color: var(--fg3); }
+  .code.copied { background: color-mix(in srgb, var(--green) 16%, transparent); }
+  .code.copied .cl, .code.copied svg { color: var(--green); }
+  .board.svc { height: 1160px; flex-direction: column; }
+  .svc .desk { padding: 26px 40px; }
+  .svc h2 { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 14px; }
+  .sgrid { display: grid; grid-template-columns: 150px 190px 360px 230px 240px; column-gap: 28px; row-gap: 10px; align-items: center; }
+  .sgrid .ch { font-size: 12px; font-weight: 600; color: var(--fg2); }
+  .sgrid .sv { font-size: 13px; font-weight: 600; color: var(--fg); }
+  .sgrid .sv span { display: block; font-weight: 400; font-size: 11px; color: var(--fg3); margin-top: 1px; font-family: "SF Mono", monospace; }
+  .sgrid .hero { padding: 10px 14px; border-radius: 14px; margin: 0; }
+  .sgrid .big-join { display: inline-flex; height: 44px; padding: 0 22px; border-radius: 22px; font-size: 15px; gap: 8px; }
+  .sgrid .big-join kbd { font: 500 11px "SF Pro Text"; padding: 2px 6px; border-radius: 5px; background: rgba(255,255,255,.22); }
 </style>
 </head>
 <body>
@@ -294,6 +314,7 @@
     <symbol id="dots" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></symbol>
     <symbol id="check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="copy" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 3.6V3.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3.5v5.5A1.5 1.5 0 0 0 4 10.5h.2" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
     <symbol id="arrow" viewBox="0 0 16 16"><path d="M5 11l6-6M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
@@ -395,6 +416,13 @@
   <div class="desk dark" data-mb="now">
     <div class="alert glass" data-alert></div>
   </div>
+</section>
+
+<section class="board tall" id="codes-zoom"><div class="desk light" data-mb="now" data-svcbig="zoom"></div></section>
+<section class="board tall" id="codes-meet"><div class="desk dark" data-mb="now" data-svcbig="meet"></div></section>
+<section class="board svc" id="joincolors">
+  <div class="desk light"><h2>Join takes the call’s colour, light</h2><div class="sgrid" data-svcgrid="light"></div></div>
+  <div class="desk dark"><h2>Join takes the call’s colour, dark</h2><div class="sgrid" data-svcgrid="dark"></div></div>
 </section>
 
 <script>
@@ -669,6 +697,65 @@ document.querySelectorAll('[data-peek]').forEach(p => {
     el.style.top = Math.max(pop.top - desk.top, target.top - desk.top - 12) + 'px';
   });
 });
+
+// ---------- join colour by service ----------
+const CAM = {
+  zoom: '<rect x="1" y="5.5" width="14.5" height="13" rx="3.6" fill="currentColor"/><path d="M17 10.6l4.7-3.3c.6-.4 1.3 0 1.3.7v8c0 .7-.7 1.1-1.3.7L17 13.4z" fill="currentColor"/>',
+  meet: '<path fill-rule="evenodd" fill="currentColor" d="M5.5 4.5h7a4 4 0 0 1 4 4v7a4 4 0 0 1-4 4h-7a4 4 0 0 1-4-4v-7a4 4 0 0 1 4-4zM5.9 17.6a2 2 0 1 0 0-.01z"/><path fill="currentColor" d="M17.6 9.4l3.7-2.4c.8-.5 1.7.1 1.7 1v8c0 .9-.9 1.5-1.7 1l-3.7-2.4z"/>',
+  teams: '<path fill="currentColor" d="M13.75 4.5A3.25 3.25 0 0 1 17 7.75v.17l3.86-2.32a.75.75 0 0 1 1.14.65v11.5a.75.75 0 0 1-1.14.64L17 16.08v.17a3.25 3.25 0 0 1-3.25 3.25h-8.5A3.25 3.25 0 0 1 2 16.25v-8.5A3.25 3.25 0 0 1 5.25 4.5h8.5z"/>',
+  webex: '<rect x="1.5" y="5" width="14" height="14" rx="2.5" fill="currentColor"/><path fill="currentColor" d="M17 9.8l4.4-2.9c.7-.4 1.6.1 1.6.9v8.4c0 .8-.9 1.3-1.6.9L17 14.2z"/>',
+  slack: '<path fill="currentColor" d="M12 3a9 9 0 0 0-9 9v5.5A2.5 2.5 0 0 0 5.5 20H7a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H5v-1a7 7 0 0 1 14 0v1h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h1.5a2.5 2.5 0 0 0 2.5-2.5V12a9 9 0 0 0-9-9z"/>',
+};
+const cam = (k, sz) => CAM[k] ? `<svg class="lg" width="${sz}" height="${sz}" viewBox="0 0 24 24">${CAM[k]}</svg>` : icon('cam', sz);
+const SVC = {
+  zoom:  { name: 'Zoom', light: '#0b5cff', dark: '#2f74ff', codes: [['Meeting ID', '843 2915 6720'], ['Passcode', '482913']] },
+  meet:  { name: 'Google Meet', light: '#00832d', dark: '#1a9a4a', codes: [['Code', 'kxq-wmbt-zpa']] },
+  teams: { name: 'Microsoft Teams', light: '#5b5fc7', dark: '#7579eb', codes: [['Meeting ID', '264 813 559 071'], ['Passcode', 'Xk7pQ2']] },
+  webex: { name: 'Webex', light: '#0a6fd1', dark: '#2b8af0', codes: [['Meeting number', '2641 813 5590']] },
+  slack: { name: 'Slack huddle', light: '#007a5a', dark: '#1f9d74', codes: [] },
+  other: { name: 'Anything else', light: '#0a84ff', dark: '#0a84ff', codes: [], note: 'Whereby, Jitsi, Chime…' },
+};
+const svcColor = (k, mode) => SVC[k][mode];
+
+document.querySelectorAll('[data-svcbig]').forEach(d => {
+  const k = SVC[d.dataset.svcbig], mode = d.classList.contains('dark') ? 'dark' : 'light';
+  d.style.setProperty('--join', k[mode]);
+  d.querySelector('.menubar .pill').innerHTML = `${cam(d.dataset.svcbig, 14)}Join Standup`;
+  d.insertAdjacentHTML('beforeend', appwin() + `<div class="scrim"></div>
+  <div class="big glass">
+    <div class="cal"><span class="dot" style="background:var(--blue)"></span>Work</div>
+    <div class="min"><div class="chip">Minimize<kbd style="font:500 11px 'SF Pro Text';opacity:.7">esc</kbd></div></div>
+    <div class="bigring">${ring(0.7, 210, 'var(--join)', 'currentColor').replace(/stroke-width="2"/g, 'stroke-width="9"').replace('r="103.4"', 'r="98"').replace('r="103.4"', 'r="98"')}
+      <div class="in"><div class="n num">0:42</div><div class="l">until it starts</div></div></div>
+    <h1>Mobile platform standup</h1>
+    <div class="bmeta num"><span>10:30 – 10:45</span><span>${icon('cam', 18)}${k.name}</span></div>
+    <div class="codes">${k.codes.map(([l, v], i) => `<div class="code ${d.dataset.svcbig === 'meet' ? '' : ''}"><span class="cl">${l}</span><span class="cv num">${v}</span>${icon('copy', 15)}</div>`).join('')}</div>
+    <div class="people"><div class="avs">${people.map(([n, c]) => `<i style="background:${c}">${n}</i>`).join('')}</div>Rahul, Priya and 4 others</div>
+    <div class="bacts">
+      <div class="btn-join">${cam(d.dataset.svcbig, 20)}Join<kbd>↩</kbd></div>
+      <div class="btn-sec">Remind me in 1 min</div>
+      <div class="btn-sec">Dismiss</div>
+    </div>
+    <div class="hint">Click a code to copy it. Click outside or press esc to minimize.</div>
+  </div>`);
+});
+
+document.querySelectorAll('[data-svcgrid]').forEach(g => {
+  const mode = g.dataset.svcgrid;
+  let h = ['', 'Menu bar', 'Glance', 'Details', 'Reminder'].map(t => `<div class="ch">${t}</div>`).join('');
+  Object.entries(SVC).forEach(([key, k]) => {
+    const st = `style="--join:${k[mode]}"`;
+    h += `<div class="sv">${k.name}<span>${k.note ?? k[mode]}</span></div>
+      <div ${st}><span class="pill" style="display:inline-flex;color:#fff;font-size:13px">${cam(key, 14)}Join Standup</span></div>
+      <div class="hero glass" ${st}><div class="grow"><div class="when num">In 12 minutes</div><div class="what" style="font-size:15px">Mobile platform standup</div></div><div class="btn-join">${cam(key, 16)}Join</div></div>
+      <div ${st}><span class="btn-join s" style="display:inline-flex">${cam(key, 16)}Join ${key === 'other' ? 'Whereby' : k.name}</span></div>
+      <div ${st}><span class="btn-join big-join">${cam(key, 19)}Join<kbd>↩</kbd></span></div>`;
+  });
+  g.innerHTML = h;
+});
+
+
+
 
 const b = location.hash.slice(1) || 'glance';
 document.getElementById(b).classList.add('on');

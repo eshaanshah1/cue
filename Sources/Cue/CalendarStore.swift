@@ -326,8 +326,8 @@ final class CalendarStore: ObservableObject {
         func at(_ day: Int, _ h: Int, _ m: Int) -> Date {
             cal.date(byAdding: DateComponents(day: day, hour: h, minute: m), to: today)!
         }
-        let meet = MeetingLink(url: URL(string: "https://meet.google.com/abc-defg-hij")!, service: "Google Meet")
-        let zoom = MeetingLink(url: URL(string: "https://zoom.us/j/1234567890")!, service: "Zoom")
+        let meet = MeetingLink(url: URL(string: "https://meet.google.com/kxq-wmbt-zpa")!, service: "Google Meet").reading([])
+        let zoom = MeetingLink(url: URL(string: "https://zoom.us/j/84329156720?pwd=dGVzdA")!, service: "Zoom").reading(["Passcode: 482913"])
         let team = ["Rahul Kumar", "Priya Shah", "Aman Mehta", "Neha Joshi", "Vikram Tiwari", "Sara Lee"]
         func m(_ t: String, _ d: Int, _ sh: Int, _ sm: Int, _ eh: Int, _ em: Int, _ c: NSColor, _ cal: String, _ l: MeetingLink?, _ p: [String] = []) -> Meeting {
             var x = Meeting(id: t, title: t, start: at(d, sh, sm), end: at(d, eh, em), color: c, calendarName: cal, link: l, attendees: p)

@@ -72,6 +72,8 @@ struct JoinStyle: ButtonStyle {
     var height: CGFloat = 32
     var size: CGFloat = 13
     var padding: CGFloat = 14
+    /// Join buttons take the call's colour; everything else stays Cue blue.
+    var tint: Color = .cueBlue
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -79,9 +81,9 @@ struct JoinStyle: ButtonStyle {
             .foregroundStyle(.white)
             .padding(.horizontal, padding)
             .frame(height: height)
-            .background(Capsule().fill(Color.cueBlue.opacity(configuration.isPressed ? 0.8 : 1)))
+            .background(Capsule().fill(tint.opacity(configuration.isPressed ? 0.8 : 1)))
             .overlay(Capsule().strokeBorder(LinearGradient(colors: [.white.opacity(0.35), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
-            .shadow(color: Color.cueBlue.opacity(0.35), radius: 1.5, y: 1)
+            .shadow(color: tint.opacity(0.35), radius: 1.5, y: 1)
             .contentShape(Capsule())
     }
 }
@@ -292,11 +294,14 @@ struct HeroView: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: open)
             Spacer(minLength: 0)
-            if meeting.link != nil {
+            if let link = meeting.link {
                 Button(action: join) {
-                    Label("Join", systemImage: "video.fill").labelStyle(TightLabel())
+                    HStack(spacing: 6) {
+                        CallIcon(kind: link.kind, size: 16)
+                        Text("Join")
+                    }
                 }
-                .buttonStyle(JoinStyle())
+                .buttonStyle(JoinStyle(tint: link.kind.color))
             }
         }
         .padding(.horizontal, 16)
@@ -403,7 +408,7 @@ struct MeetingRow: View {
                 Button(action: join) {
                     Image(systemName: camHover ? "video.fill" : "video")
                         .font(.system(size: 12))
-                        .foregroundStyle(hover ? Color.cueBlue : Color.tertiary)
+                        .foregroundStyle(hover ? link.kind.color : Color.tertiary)
                         .frame(width: 26, height: 24)
                         .contentShape(Rectangle())
                 }
@@ -716,6 +721,12 @@ struct OverlayView: View {
                 .font(.system(size: 17))
                 .foregroundStyle(.secondary)
                 .padding(.top, 12)
+                if let codes = meeting.link?.codes, !codes.isEmpty {
+                    HStack(spacing: 10) {
+                        ForEach(codes, id: \.self) { CodeChip(code: $0) }
+                    }
+                    .padding(.top, 18)
+                }
                 if !meeting.attendees.isEmpty { people.padding(.top, 26) }
                 actions.padding(.top, 40)
             }
@@ -739,7 +750,9 @@ struct OverlayView: View {
                     .keyboardShortcut(.cancelAction)
                 }
                 Spacer()
-                Text("Click outside or press esc to minimize. Dismiss closes it for good.")
+                Text(meeting.link?.codes.isEmpty == false
+                     ? "Click a code to copy it. Click outside or press esc to minimize."
+                     : "Click outside or press esc to minimize. Dismiss closes it for good.")
                     .font(.system(size: 13))
                     .foregroundStyle(Color.tertiary)
             }
@@ -752,11 +765,13 @@ struct OverlayView: View {
         .focusEffectDisabled()
     }
 
+    private var tint: Color { meeting.link?.kind.color ?? .cueBlue }
+
     private func countdown(_ now: Date) -> some View {
         let left = meeting.start.timeIntervalSince(now)
         let started = left <= 0
         return ZStack {
-            Ring(fraction: started ? 1 : left / 60, color: .cueBlue, width: 9)
+            Ring(fraction: started ? 1 : left / 60, color: tint, width: 9)
             VStack(spacing: 6) {
                 Text(started ? "Now" : Fmt.countdown(left))
                     .font(.system(size: 64, weight: .semibold, design: .rounded))
@@ -794,15 +809,15 @@ struct OverlayView: View {
 
     private var actions: some View {
         HStack(spacing: 12) {
-            if meeting.link != nil {
+            if let link = meeting.link {
                 Button { model.join(meeting) } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "video.fill").font(.system(size: 16, weight: .semibold))
+                        CallIcon(kind: link.kind, size: 21)
                         Text("Join")
                         KeyHint(key: "↩", onBlue: true)
                     }
                 }
-                .buttonStyle(JoinStyle(height: 50, size: 17, padding: 28))
+                .buttonStyle(JoinStyle(height: 50, size: 17, padding: 28, tint: tint))
                 .keyboardShortcut(.defaultAction)
             }
             Button("Remind me in 1 min") { model.snooze() }
@@ -810,6 +825,42 @@ struct OverlayView: View {
             Button("Dismiss") { model.dismiss() }
                 .buttonStyle(SecondaryStyle(height: 50, size: 15, padding: 22))
         }
+    }
+}
+
+/// A meeting ID, passcode or Meet code. Click copies it.
+struct CodeChip: View {
+    let code: CallCode
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(code.value, forType: .string)
+            copied = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
+        } label: {
+            HStack(spacing: 10) {
+                Text(copied ? "Copied" : code.label)
+                    .font(.system(size: 14))
+                    .foregroundStyle(copied ? Color.green : .secondary)
+                Text(code.value)
+                    .font(.system(size: 16, weight: .semibold))
+                    .tracking(0.2)
+                    .monospacedDigit()
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(copied ? Color.green : Color.tertiary)
+                    .frame(width: 14)
+            }
+            .padding(.leading, 14)
+            .padding(.trailing, 12)
+            .frame(height: 38)
+            .background(Capsule().fill(copied ? Color.green.opacity(0.16) : Color.fill))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .help("Copy \(code.label.lowercased())")
     }
 }
 
@@ -843,7 +894,7 @@ struct MiniCard: View {
         let live = now >= m.start
         let left = m.end.timeIntervalSince(now)
         let wrapping = live && left <= 3 * 60
-        let tint: Color = wrapping ? .cueOrange : .cueBlue
+        let tint: Color = wrapping ? .cueOrange : m.link?.kind.color ?? .cueBlue
         let next = model.meetings.first { $0.start >= m.end && Calendar.current.isDate($0.start, inSameDayAs: now) }
 
         let kicker: String
@@ -874,8 +925,8 @@ struct MiniCard: View {
                 Text(sub).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).monospacedDigit()
             }
             Spacer(minLength: 0)
-            if m.link != nil {
-                Button("Join") { model.join(m) }.buttonStyle(JoinStyle(height: 28, size: 12, padding: 12))
+            if let link = m.link {
+                Button("Join") { model.join(m) }.buttonStyle(JoinStyle(height: 28, size: 12, padding: 12, tint: link.kind.color))
             }
         }
         .padding(.leading, 14)

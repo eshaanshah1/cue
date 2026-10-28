@@ -19,8 +19,15 @@ struct GCalendar: Decodable, Identifiable, Equatable {
 struct GEvent: Decodable {
     struct Time: Decodable { let dateTime: String? }
     struct Conference: Decodable {
-        struct Entry: Decodable { let entryPointType: String?; let uri: String? }
+        struct Entry: Decodable {
+            let entryPointType: String?
+            let uri: String?
+            let meetingCode: String?
+            let passcode: String?
+            let password: String?
+        }
         struct Solution: Decodable { let name: String? }
+        let conferenceId: String?
         let entryPoints: [Entry]?
         let conferenceSolution: Solution?
     }
@@ -65,7 +72,7 @@ struct FreeBusy: Equatable {
 /// Google Calendar REST. Responses are trimmed with `fields` so each poll is a few KB.
 enum GoogleCalendarAPI {
     private static let base = "https://www.googleapis.com/calendar/v3"
-    private static let eventFields = "id,iCalUID,summary,status,eventType,start(dateTime),end(dateTime),hangoutLink,location,description,htmlLink,conferenceData(entryPoints(entryPointType,uri),conferenceSolution(name)),attendees(email,displayName,self,responseStatus,resource,optional,organizer),organizer(self),guestsCanModify"
+    private static let eventFields = "id,iCalUID,summary,status,eventType,start(dateTime),end(dateTime),hangoutLink,location,description,htmlLink,conferenceData(conferenceId,entryPoints(entryPointType,uri,meetingCode,passcode,password),conferenceSolution(name)),attendees(email,displayName,self,responseStatus,resource,optional,organizer),organizer(self),guestsCanModify"
     private static let iso = ISO8601DateFormatter()
 
     static func calendars(token: String) async throws -> [GCalendar] {
@@ -238,15 +245,21 @@ extension Meeting {
         else { return nil }
 
         var link: MeetingLink?
-        if let video = e.conferenceData?.entryPoints?.first(where: { $0.entryPointType == "video" }),
-           let uri = video.uri, let url = URL(string: uri) {
+        var known = CallCodes.Known()
+        let video = e.conferenceData?.entryPoints?.first(where: { $0.entryPointType == "video" })
+        if let video, let uri = video.uri, let url = URL(string: uri) {
             let name = e.conferenceData?.conferenceSolution?.name ?? "Video call"
             link = MeetingLink(url: url, service: name.hasPrefix("Zoom") ? "Zoom" : name)
+            // conferenceId is the Meet code or Zoom ID; for other add-ons it can be an opaque thread ID.
+            let id = [.meet, .zoom].contains(link?.kind) ? e.conferenceData?.conferenceId : nil
+            known = CallCodes.Known(meetingCode: video.meetingCode ?? id, passcode: video.passcode ?? video.password)
         } else if let meet = e.hangoutLink.flatMap(URL.init(string:)) {
             link = MeetingLink(url: meet, service: "Google Meet")
         } else {
             link = LinkDetector.detect([e.location, e.description])
         }
+        let notes = Meeting.plainText(fromHTML: e.description)
+        link = link?.reading([e.location, notes], known: known)
 
         let people = (e.attendees ?? []).compactMap { a -> Person? in
             guard let email = a.email else { return nil }
@@ -269,7 +282,7 @@ extension Meeting {
             room: rooms.isEmpty ? Meeting.place(e.location) : rooms.joined(separator: ", "),
             calendarID: calendar.id,
             people: people, // rooms included, so rewriting the guest list never drops the booking
-            notes: Meeting.plainText(fromHTML: e.description),
+            notes: notes,
             selfStatus: people.first(where: \.isSelf)?.status,
             isOrganizer: organizer,
             canModify: calendar.writable && (organizer || e.guestsCanModify == true)

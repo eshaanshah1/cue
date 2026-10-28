@@ -399,19 +399,19 @@ enum BarArt {
 
     private static let orange = NSColor(srgbRed: 0.93, green: 0.42, blue: 0.08, alpha: 1)
 
-    private enum Style {
-        case white, orange, blue
+    private enum Style: Equatable {
+        case white, orange, call(CallKind)
         var fill: NSColor {
             switch self {
             case .white: return NSColor(white: 1, alpha: 0.96)
             case .orange: return BarArt.orange
-            case .blue: return .systemBlue
+            case .call(let kind): return kind.nsColor
             }
         }
         var text: NSColor { self == .white ? NSColor(white: 0.1, alpha: 1) : .white }
     }
 
-    private enum Glyph { case calendar, video, ring(CGFloat, NSColor?) }
+    private enum Glyph { case calendar, call(CallKind), ring(CGFloat, NSColor?) }
 
     static func image(for state: AppModel.BarState) -> NSImage? {
         switch state {
@@ -422,7 +422,8 @@ enum BarArt {
         case .soon(let m, let mins):
             return pill("\(m.shortTitle) in \(mins)m", mins <= soonMinutes ? .orange : .white, .ring(CGFloat(mins) / 60, nil))
         case .join(let m):
-            return pill("Join \(m.shortTitle)", .blue, .video)
+            let kind = m.link?.kind ?? .other
+            return pill("Join \(m.shortTitle)", .call(kind), .call(kind))
         case .during(_, let left, let elapsed):
             let wrapping = left <= wrapUpMinutes
             return pill("\(left)m left", wrapping ? .orange : .white, .ring(CGFloat(elapsed), wrapping ? nil : .systemBlue))
@@ -451,7 +452,9 @@ enum BarArt {
             let name: String
             switch glyph {
             case .calendar: name = "calendar"
-            case .video: name = "video.fill"
+            case .call(let kind):
+                guard let symbol = kind.symbol else { return nil }
+                name = symbol
             case .ring: return nil
             }
             return NSImage(systemSymbolName: name, accessibilityDescription: nil)?
@@ -482,6 +485,16 @@ enum BarArt {
                 arc.lineCapStyle = .round
                 (tint ?? fg).setStroke()
                 arc.stroke()
+            } else if case .call(let kind) = glyph, let path = kind.glyph, let ctx = NSGraphicsContext.current?.cgContext {
+                // The mark is drawn on a 24-point grid with y down; flip it into the pill.
+                let side: CGFloat = 14
+                ctx.saveGState()
+                ctx.translateBy(x: g.midX - side / 2, y: g.midY + side / 2)
+                ctx.scaleBy(x: side / 24, y: -side / 24)
+                ctx.addPath(path.cgPath)
+                ctx.setFillColor(fg.cgColor)
+                ctx.fillPath(using: .evenOdd)
+                ctx.restoreGState()
             } else if let symbol {
                 let sz = symbol.size
                 symbol.draw(in: NSRect(x: g.midX - sz.width / 2, y: g.midY - sz.height / 2, width: sz.width, height: sz.height))
