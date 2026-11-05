@@ -236,11 +236,13 @@ extension Meeting {
         return iso.date(from: s) ?? isoFractional.date(from: s)
     }
 
-    /// Returns nil for anything that shouldn't show: all-day, cancelled, declined, working location, out of office.
+    /// Returns nil for anything that shouldn't show: all-day (or a whole day's worth), cancelled, declined,
+    /// working location, out of office.
     init?(google e: GEvent, calendar: GCalendar) {
         guard e.status != "cancelled",
               e.eventType != "workingLocation", e.eventType != "outOfOffice",
               let start = Self.date(e.start?.dateTime), let end = Self.date(e.end?.dateTime),
+              !Self.coversDay(start: start, end: end),
               e.attendees?.contains(where: { $0.isSelf == true && $0.responseStatus == "declined" }) != true
         else { return nil }
 

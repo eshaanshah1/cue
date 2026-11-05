@@ -174,6 +174,17 @@ struct Meeting: Identifiable, Equatable {
 
     func isLive(at now: Date) -> Bool { start <= now && now < end }
 
+    /// Timed events that cover a whole day (Workday's midnight-to-midnight "Time Off", multi-day
+    /// blocks) are all-day events in disguise. They're dropped like real all-day events so they
+    /// never outrank the calls inside them.
+    static func coversDay(start: Date, end: Date) -> Bool {
+        if end.timeIntervalSince(start) >= 24 * 3600 { return true }
+        // Midnight to midnight is 23 or 25 hours across a DST change.
+        let cal = Calendar.current
+        let midnight = cal.startOfDay(for: start)
+        return start == midnight && end >= (cal.date(byAdding: .day, value: 1, to: midnight) ?? end)
+    }
+
     static func == (a: Meeting, b: Meeting) -> Bool {
         a.key == b.key && a.title == b.title && a.end == b.end && a.link == b.link
             && a.attendees == b.attendees && a.calendarName == b.calendarName && a.room == b.room

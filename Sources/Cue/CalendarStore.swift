@@ -108,7 +108,8 @@ final class CalendarStore: ObservableObject {
         let (today, end) = Self.window()
         let events = store.events(matching: store.predicateForEvents(withStart: today, end: end, calendars: nil))
         let next = events
-            .filter { !$0.isAllDay && $0.status != .canceled && !Self.declined($0) }
+            .filter { !$0.isAllDay && !Meeting.coversDay(start: $0.startDate, end: $0.endDate) }
+            .filter { $0.status != .canceled && !Self.declined($0) }
             .map(Meeting.init(event:))
             .sorted { ($0.start, $0.end) < ($1.start, $1.end) }
         loadedDay = today

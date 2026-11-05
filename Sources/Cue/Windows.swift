@@ -424,9 +424,9 @@ enum BarArt {
         case .join(let m):
             let kind = m.link?.kind ?? .other
             return pill("Join \(m.shortTitle)", .call(kind), .call(kind))
-        case .during(_, let left, let elapsed):
+        case .during(let m, let left, let elapsed):
             let wrapping = left <= wrapUpMinutes
-            return pill("\(left)m left", wrapping ? .orange : .white, .ring(CGFloat(elapsed), wrapping ? nil : .systemBlue))
+            return pill("\(m.shortTitle) · \(left)m left", wrapping ? .orange : .white, .ring(CGFloat(elapsed), wrapping ? nil : .systemBlue))
         }
     }
 
