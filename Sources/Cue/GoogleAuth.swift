@@ -43,7 +43,9 @@ struct GoogleClient: Decodable {
 /// The refresh token lives in the Keychain; the access token only in memory.
 @MainActor
 final class GoogleAuth {
-    private static let scope = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly email"
+    /// Everything Cue does, asked for in one go. Coworkers come from the Workspace directory;
+    /// their availability needs nothing extra, since free/busy works with calendar.readonly.
+    private static let scope = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/directory.readonly email"
     private static let tokenURL = URL(string: "https://oauth2.googleapis.com/token")!
 
     let client: GoogleClient? = GoogleAuth.loadClient()
@@ -58,6 +60,7 @@ final class GoogleAuth {
     /// What Google actually granted. Older sign-ins only have read access.
     private(set) var grantedScopes = UserDefaults.standard.string(forKey: "googleScopes") ?? ""
     var canWrite: Bool { grantedScopes.contains("auth/calendar.events") || grantedScopes.contains("auth/calendar ") || grantedScopes.hasSuffix("auth/calendar") }
+    var canSeeCoworkers: Bool { grantedScopes.contains("auth/directory.readonly") }
 
     init() {
         // Demo mode never touches the real sign-in, so it doesn't stall on a Keychain prompt.

@@ -67,6 +67,11 @@ final class PopoverController {
     func show() {
         guard panel == nil else { return }
         model.store.refreshIfStale()
+        // Sign-ins from before Cue asked for everything up front get asked once.
+        if model.store.missingAccess, model.route == .main, !UserDefaults.standard.bool(forKey: "askedForAccess") {
+            UserDefaults.standard.set(true, forKey: "askedForAccess")
+            model.route = .permission
+        }
         let panel = FloatingPanel(level: .popUpMenu)
         panel.onCancel = { [weak self] in
             guard let self else { return }
@@ -137,6 +142,7 @@ final class PopoverController {
         peek?.hide()
         peek = nil
         if model.route != .compose { model.route = .main }
+        model.endMove()
         self.panel = nil
         host = nil
         closedAt = Date()

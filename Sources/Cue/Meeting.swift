@@ -131,6 +131,8 @@ struct Person: Equatable, Hashable {
     var organizer = false
     var optional = false
     var resource = false
+    /// The note left with a reply. Cue uses it to propose a new time.
+    var comment: String? = nil
 
     var display: String { name ?? email }
     var firstName: String { Fmt.firstName(display) }
@@ -139,8 +141,8 @@ struct Person: Equatable, Hashable {
 struct Meeting: Identifiable, Equatable {
     let id: String
     let title: String
-    let start: Date
-    let end: Date
+    var start: Date
+    var end: Date
     let color: NSColor
     let calendarName: String
     let link: MeetingLink?

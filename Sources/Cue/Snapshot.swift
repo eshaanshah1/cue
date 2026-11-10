@@ -85,6 +85,33 @@ enum Snapshot {
         var mine = oneOnOne
         mine.isOrganizer = true
         save("edit", chrome(EditView(meeting: mine)))
+
+        // Dragging a meeting on the ribbon: one strip for 5+ guests, lanes for fewer.
+        let cal = Calendar.current
+        func today(_ h: Int, _ m: Int) -> Date { cal.date(bySettingHour: h, minute: m, second: 0, of: Clock.now())! }
+        let harness = store.meetings[3]
+        func moving(_ m: Meeting, to h: Int, _ min: Int, dropped: Bool) async {
+            model.endMove()
+            let mv = model.beginMove(m)
+            await mv.loadBusyNow()
+            mv.pick(today(h, min))
+            mv.dropped = dropped
+        }
+        await moving(harness, to: 12, 15, dropped: false)
+        save("move-strip", PopoverView(close: {}))
+        await moving(harness, to: 13, 30, dropped: true)
+        save("move-strip-drop", PopoverView(close: {}))
+        var four = harness
+        four.people = harness.people.filter { p in p.isSelf || ["rahul", "priya", "aman", "neha"].contains { p.email.hasPrefix($0) } }
+        await moving(four, to: 11, 45, dropped: false)
+        save("move-lanes", PopoverView(close: {}))
+        var theirs = store.meetings[6]
+        theirs.canModify = false
+        theirs.isOrganizer = false
+        await moving(theirs, to: 12, 0, dropped: true)
+        save("move-propose", PopoverView(close: {}))
+        model.endMove()
+        save("permission", chrome(PermissionView()))
     }
 
     static func tinted(_ text: String, _ tokens: [NSRange], size: CGFloat) -> Text {

@@ -186,7 +186,9 @@ struct PopoverView: View {
     }
 
     @ViewBuilder private var content: some View {
-        if let m = model.hero {
+        if let move = model.move {
+            MoveHero(move: move)
+        } else if let m = model.hero {
             HeroView(meeting: m, now: model.now, join: { act { model.join(m) } }, open: { model.open(m) })
         } else {
             VStack(alignment: .leading, spacing: 3) {
@@ -319,12 +321,16 @@ struct TightLabel: LabelStyle {
 }
 
 /// Today from 8 to 8 (stretched if meetings fall outside), with a red line for now.
+/// Meetings that haven't started can be dragged to a new time; see `MoveModel`.
 struct RibbonView: View {
+    @EnvironmentObject var model: AppModel
     let meetings: [Meeting]
     let now: Date
     let highlight: String?
     @Environment(\.peek) private var peek
     @State private var hovered: String?
+    /// The meeting under the pointer while dragging, and where it started from.
+    @State private var grab: (key: String, from: Date)?
 
     private var hours: (Double, Double) {
         let cal = Calendar.current
@@ -338,29 +344,59 @@ struct RibbonView: View {
         let (lo, hi) = hours
         let day = Calendar.current.startOfDay(for: now)
         let pos = { (d: Date) in (d.timeIntervalSince(day) / 3600 - lo) / (hi - lo) }
+        let move = model.move
+        let extra = MoveLanes.extra(move)
         GeometryReader { geo in
             let w = geo.size.width
             let g = geo.frame(in: .global)
+            let x = { (d: Date) in CGFloat(pos(d)) * w }
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.07)).frame(height: 18)
                 ForEach(meetings, id: \.key) { m in
-                    let x = max(0, pos(m.start)) * w
-                    let bw = max(3, min(1, pos(m.end)) * w - x - 2)
+                    let bx = max(0, pos(m.start)) * w
+                    let bw = max(3, min(1, pos(m.end)) * w - bx - 2)
+                    let color = Color(nsColor: m.color)
+                    Group {
+                        if move?.meeting.key == m.key {
+                            RoundedRectangle(cornerRadius: 5)
+                                .strokeBorder(color, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2]))
+                                .opacity(0.7)
+                        } else {
+                            RoundedRectangle(cornerRadius: 5).fill(color.opacity(m.end <= now ? 0.35 : 1))
+                        }
+                    }
+                    .frame(width: bw, height: 18)
+                    .background {
+                        if hovered == m.key && move == nil {
+                            RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary, lineWidth: 1.5).padding(-3)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onHover { inside in
+                        if inside { hovered = m.key } else if hovered == m.key { hovered = nil }
+                        if inside { model.prefetchBusy(m) }
+                        peek(m, inside && model.move == nil && grab == nil ? CGRect(x: g.minX + bx, y: g.minY, width: bw, height: 18) : nil)
+                    }
+                    .pointerStyle(model.canMove(m) ? (grab == nil ? .grabIdle : .grabActive) : nil)
+                    .gesture(drag(m, from: m.start, width: w, lo: lo, hi: hi))
+                    .offset(x: bx)
+                    .zIndex(hovered == m.key ? 1 : 0)
+                }
+                if let move {
+                    MoveLanes(move: move, x: x, lo: lo, hi: hi)
+                    // The meeting at its new time, lifted off the ribbon.
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(Color(nsColor: m.color).opacity(m.end <= now ? 0.35 : 1))
-                        .frame(width: bw, height: 18)
+                        .fill(Color(nsColor: move.meeting.color))
+                        .frame(width: max(3, x(move.end) - x(move.start) - 2), height: 18)
                         .background {
-                            if hovered == m.key {
-                                RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary, lineWidth: 1.5).padding(-3)
-                            }
+                            RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary, lineWidth: 1.5).padding(-3)
                         }
+                        .shadow(color: .black.opacity(0.22), radius: 5, y: 3)
                         .contentShape(Rectangle())
-                        .onHover { inside in
-                            if inside { hovered = m.key } else if hovered == m.key { hovered = nil }
-                            peek(m, inside ? CGRect(x: g.minX + x, y: g.minY, width: bw, height: 18) : nil)
-                        }
-                        .offset(x: x)
-                        .zIndex(hovered == m.key ? 1 : 0)
+                        .pointerStyle(grab == nil ? .grabIdle : .grabActive)
+                        .gesture(drag(move.meeting, from: move.start, width: w, lo: lo, hi: hi))
+                        .offset(x: x(move.start))
+                        .zIndex(2)
                 }
                 ForEach(Array(stride(from: ceil(lo / 3) * 3, through: hi, by: 3)).filter { $0 > lo && $0 < hi }, id: \.self) { hr in
                     Text("\(Int(hr))")
@@ -369,7 +405,7 @@ struct RibbonView: View {
                         .monospacedDigit()
                         .fixedSize()
                         .frame(width: 30)
-                        .offset(x: (hr - lo) / (hi - lo) * w - 15, y: 22)
+                        .offset(x: (hr - lo) / (hi - lo) * w - 15, y: 22 + extra)
                 }
                 let p = pos(now)
                 if p >= 0 && p <= 1 {
@@ -379,10 +415,35 @@ struct RibbonView: View {
                     }
                     .frame(width: 8)
                     .offset(x: p * w - 4, y: -4)
+                    .allowsHitTesting(false)
+                    .zIndex(3)
                 }
             }
         }
-        .frame(height: 40)
+        .frame(height: 40 + extra)
+    }
+
+    /// Slides a meeting along the ribbon in quarter hours. Global coordinates, so the block
+    /// moving under the pointer doesn't feed back into the distance dragged.
+    private func drag(_ m: Meeting, from: Date, width: CGFloat, lo: Double, hi: Double) -> some Gesture {
+        DragGesture(minimumDistance: 3, coordinateSpace: .global)
+            .onChanged { v in
+                guard model.canMove(m), width > 0 else { return }
+                let move = model.beginMove(m)
+                if grab?.key != m.key {
+                    grab = (m.key, from)
+                    hovered = nil
+                    peek(m, nil)
+                }
+                move.dropped = false
+                let hours = Double(v.translation.width / width) * (hi - lo)
+                move.slide(to: (grab?.from ?? from).addingTimeInterval(hours * 3600), lo: lo, hi: hi)
+            }
+            .onEnded { _ in
+                grab = nil
+                guard let move = model.move, move.meeting.key == m.key else { return }
+                if move.start == m.start { model.endMove() } else { move.dropped = true }
+            }
     }
 }
 

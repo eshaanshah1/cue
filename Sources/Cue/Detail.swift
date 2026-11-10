@@ -535,29 +535,55 @@ struct DestructiveStyle: ButtonStyle {
     }
 }
 
-// MARK: - Asking for edit access
+// MARK: - Asking for more access
 
+/// Shown when a sign-in from an older Cue lacks something: once on its own, and whenever
+/// an action needs write access. One sign-in grants everything.
 struct PermissionView: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Allow Cue to change your calendar").font(.system(size: 15, weight: .semibold))
-            Text("Adding events, editing and replying need one more permission from Google. Your current sign-in only lets Cue read.")
+        let google = model.store.google
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Give Cue a little more access").font(.system(size: 15, weight: .semibold))
+            Text("Google asks once for everything Cue does. Your current sign-in is missing one of these.")
                 .font(.system(size: 12)).foregroundStyle(.secondary)
+                .lineSpacing(1.5)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                Button("Sign in again") {
+                .padding(.top, 4)
+            item(granted: google.canWrite, icon: "pencil", "Read and change your calendar",
+                 "Add, edit and move events, and reply to invites.")
+                .padding(.top, 12)
+            item(granted: google.canSeeCoworkers, icon: "person.2", "See your coworkers",
+                 "Find anyone at your company by name when you invite or move a meeting.")
+                .padding(.top, 12)
+            HStack(spacing: 8) {
+                Button("Continue with Google") {
                     model.route = .main
                     model.store.signInWithGoogle()
                 }
-                .buttonStyle(JoinStyle(height: 28, size: 12, padding: 12))
-                Button("Not now") { model.route = .main }.buttonStyle(SecondaryStyle())
+                .buttonStyle(JoinStyle(height: 30, size: 13, padding: 14))
+                Button("Not now") { model.route = .main }.buttonStyle(SecondaryStyle(height: 30, size: 13, padding: 14))
             }
-            .padding(.top, 10)
+            .padding(.top, 16)
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
-        .padding(.bottom, 12)
+        .padding(.bottom, 10)
+    }
+
+    private func item(granted: Bool, icon: String, _ title: String, _ detail: String) -> some View {
+        let tint = granted ? Color(nsColor: .systemGreen) : Color.cueBlue
+        return HStack(alignment: .top, spacing: 10) {
+            Image(systemName: granted ? "checkmark" : icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 26, height: 26)
+                .background(RoundedRectangle(cornerRadius: 7).fill(tint.opacity(0.16)))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.system(size: 13, weight: .semibold))
+                Text(detail).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
