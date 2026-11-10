@@ -23,6 +23,9 @@ final class AppModel: ObservableObject {
     @Published var route: Route = .main
     /// The draft survives the popover closing, until it's created or cancelled.
     @Published private(set) var compose: ComposeModel?
+    /// A meeting being dragged on the ribbon. Gone when the popover closes.
+    @Published private(set) var move: MoveModel?
+    private var moveSink: AnyCancellable?
 
     let store: CalendarStore
     lazy var overlay = OverlayController(model: self)
@@ -70,6 +73,34 @@ final class AppModel: ObservableObject {
 
     func meeting(_ key: String) -> Meeting? { meetings.first { $0.key == key } }
 
+    // MARK: Moving a meeting
+
+    /// Your own meetings move; other people's get a proposal. Only ones that haven't started.
+    func canMove(_ m: Meeting) -> Bool {
+        store.source == .google && m.calendarID != nil && m.start > now
+            && (m.canModify || m.people.contains(where: \.isSelf))
+    }
+
+    func beginMove(_ m: Meeting) -> MoveModel {
+        if let move, move.meeting.key == m.key { return move }
+        let next = MoveModel(meeting: m, store: store)
+        moveSink = next.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }
+        move = next
+        return next
+    }
+
+    func endMove() {
+        moveSink = nil
+        move = nil
+    }
+
+    /// Warms the free/busy cache while the pointer rests on a meeting, so lanes show at once.
+    func prefetchBusy(_ m: Meeting) {
+        let ids = m.people.filter { !$0.isSelf && !$0.resource }.map(\.email)
+        guard canMove(m), !ids.isEmpty else { return }
+        Task { _ = await store.freeBusy(ids, day: m.start) }
+    }
+
     func open(_ m: Meeting) { route = .detail(m.key) }
 
     func edit(_ m: Meeting) {
@@ -80,6 +111,7 @@ final class AppModel: ObservableObject {
     /// Esc steps back one screen before it closes the popover.
     func back() -> Bool {
         switch route {
+        case .main where move != nil: endMove()
         case .main: return false
         case .edit(let k): route = .detail(k)
         case .compose: route = .main

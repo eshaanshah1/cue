@@ -293,6 +293,36 @@
   .sgrid .hero { padding: 10px 14px; border-radius: 14px; margin: 0; }
   .sgrid .big-join { display: inline-flex; height: 44px; padding: 0 22px; border-radius: 22px; font-size: 15px; gap: 8px; }
   .sgrid .big-join kbd { font: 500 11px "SF Pro Text"; padding: 2px 6px; border-radius: 5px; background: rgba(255,255,255,.22); }
+
+  /* ---------- drag to reschedule ---------- */
+  .ribbon.tall { height: 48px; }
+  .ribbon .ev.orig { background: transparent !important; border: 1.5px dashed var(--c); opacity: .7; }
+  .ribbon .ev.lift { box-shadow: 0 0 0 1.5px var(--glassbg), 0 0 0 3px var(--fg2), 0 4px 10px rgba(0,0,0,.22); z-index: 2; }
+  .ribbon .avail { position: absolute; left: 0; right: 0; top: 21px; height: 5px; border-radius: 2.5px; background: var(--fg4); overflow: hidden; }
+  .ribbon .avail i { position: absolute; top: 0; bottom: 0; }
+  .ribbon .avail i.f { background: color-mix(in srgb, var(--green) 70%, transparent); }
+  .ribbon .avail i.b { background: repeating-linear-gradient(135deg, var(--fg2) 0 1.5px, transparent 1.5px 4px); }
+  .ribbon .band { position: absolute; top: -3px; border-radius: 7px; border: 1.5px dashed var(--blue); background: color-mix(in srgb, var(--blue) 10%, transparent); }
+  .ribbon .band.bad { border-color: var(--red); background: color-mix(in srgb, var(--red) 10%, transparent); }
+  .ribbon.tall .hr { top: 31px; }
+  .ribbon .ln2 { position: absolute; left: 0; right: 0; height: 11px; border-radius: 3.5px; background: var(--fg4); }
+  .ribbon .ln2 .nm { position: absolute; left: 4px; top: 0; line-height: 11px; font-size: 8.5px; font-weight: 600; color: var(--fg3); }
+  .ribbon .ln2 .busy { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--c) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1px var(--c); opacity: .75; }
+  .hero .when.bad { color: var(--red); }
+  .hero .meta .d { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .hero .meta .slot { height: 20px; padding: 0 8px; font-size: 11px; }
+  .hero .acts2 { display: flex; gap: 6px; flex: none; }
+  .hero .acts2 .btn-sec, .hero .acts2 .btn-join { height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12px; }
+  .grab { position: absolute; width: 18px; height: 22px; }
+  .perm { padding: 14px 16px 10px; }
+  .perm h3 { font-size: 15px; font-weight: 600; }
+  .perm p { font-size: 12px; color: var(--fg2); margin-top: 4px; line-height: 1.4; }
+  .perm .it { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; }
+  .perm .it .ic { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--blue) 16%, transparent); color: var(--blue); }
+  .perm .it .ic.ok { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); }
+  .perm .it b { font-size: 13px; font-weight: 600; display: block; }
+  .perm .it span { font-size: 12px; color: var(--fg2); line-height: 1.35; display: block; margin-top: 1px; }
+  .perm .bt { display: flex; gap: 8px; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -423,6 +453,30 @@
 <section class="board svc" id="joincolors">
   <div class="desk light"><h2>Join takes the call’s colour, light</h2><div class="sgrid" data-svcgrid="light"></div></div>
   <div class="desk dark"><h2>Join takes the call’s colour, dark</h2><div class="sgrid" data-svcgrid="dark"></div></div>
+</section>
+
+
+<!-- ====================== DRAG TO RESCHEDULE ====================== -->
+<section class="board" id="dragstrip">
+  <div class="desk light" data-mb="upcoming"><div class="pop glass" style="right:150px" data-drag="strip"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>A. One strip for everyone else</b>Grab a meeting on the ribbon and slide it. It snaps to quarter hours. A thin strip under the ribbon turns green where every guest is free and stripes where anyone is busy. The top of the popover reads out the new time and who can’t make it.</div></div>
+  <div class="desk dark" data-mb="upcoming"><div class="pop glass" style="right:150px" data-drag="strip" data-bad></div></div>
+</section>
+<section class="board" id="draglanes">
+  <div class="desk light" data-mb="upcoming"><div class="pop glass" style="right:150px" data-drag="lanes"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>B. A lane per guest</b>Same drag, but each guest gets their own thin lane under the ribbon, striped in their colour where they’re busy. You see exactly who clashes. Four guests or fewer get a lane each; five or more share the single strip from A.</div></div>
+  <div class="desk dark" data-mb="upcoming"><div class="pop glass" style="right:150px" data-drag="lanes" data-bad></div></div>
+</section>
+<section class="board" id="propose">
+  <div class="desk light" data-mb="upcoming"><div class="pop glass" style="right:150px" data-drag="strip" data-done="move" data-bad></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Let go to propose</b>The block stays where you dropped it and the top asks you to confirm. Your own meetings move right away and Google emails the guests. If someone’s busy, Cue offers the nearest times everyone’s free. Esc puts it back.</div></div>
+  <div class="desk dark" data-mb="upcoming"><div class="pop glass" style="right:150px" data-drag="strip" data-done="propose"></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>Someone else’s meeting</b>You can’t move it, so Cue asks for you: it marks you Maybe and sends the organiser a note with the new time, the way Google Calendar’s “Propose a new time” does.</div></div>
+</section>
+<section class="board" id="coworkers">
+  <div class="desk light" data-mb="upcomingIdle"><div class="pop glass" style="right:150px" data-perm></div>
+    <div class="note" style="left:44px; top:120px; width:250px"><b>One sign-in for everything</b>Signing in now asks for all of it up front. People who signed in before see this once. Coworkers come from your Google Workspace directory, so you can add anyone at BrowserStack by name, not just people you’ve met lately. Availability already works through Google’s free/busy lookup.</div></div>
+  <div class="desk dark" data-mb="upcomingIdle"><div class="pop glass" style="right:150px" data-perm="dark"></div></div>
 </section>
 
 <script>
@@ -756,6 +810,88 @@ document.querySelectorAll('[data-svcgrid]').forEach(g => {
 
 
 
+
+// ---------- drag to reschedule ----------
+const hatchBusy = {
+  priya: [['09:30','10:30'], ['12:30','13:30'], ['15:00','16:00']],
+  rahul: [['10:30','10:45'], ['13:30','14:00'], ['16:30','17:30']],
+  aman: [['10:30','10:45'], ['11:00','11:45'], ['14:00','15:00']],
+  neha: [['10:30','10:45'], ['11:00','11:45'], ['17:00','18:00']],
+};
+document.querySelectorAll('[data-drag]').forEach(p => {
+  const bad = p.hasAttribute('data-bad'), done = p.dataset.done, lanesMode = p.dataset.drag === 'lanes';
+  const to = bad ? ['12:30', '13:15'] : ['11:45', '12:30'];
+  const guest = done === 'propose';
+  const title = guest ? 'Pulse roadmap review' : 'AI Harness sync';
+  const col = guest ? 'var(--teal)' : C.harness;
+  const from = guest ? ['15:00', '15:30'] : ['11:00', '11:45'];
+  const timeTo = guest ? ['12:00', '12:30'] : to;
+  const when = done ? (guest ? `Propose ${timeTo[0]} – ${timeTo[1]}` : `Move to ${timeTo[0]} – ${timeTo[1]}?`) : `Move to ${timeTo[0]} – ${timeTo[1]}`;
+  let meta = bad
+    ? `<span class="d" style="background:var(--red)"></span>Priya’s busy then${done ? `. Try <span class="slot">11:45</span><span class="slot">14:15</span>` : ''}`
+    : `<span class="d" style="background:var(--green)"></span>Everyone’s free${done === 'move' ? ' · emails 6 guests' : ''}`;
+  if (guest) meta = `<span class="d" style="background:var(--green)"></span>Everyone’s free · asks Rahul`;
+  const acts = done ? `<div class="acts2"><span class="btn-sec">Cancel</span><span class="btn-join">${guest ? 'Propose' : 'Move'}</span></div>` : '';
+  let h = `<div class="hero" style="flex-direction:column;align-items:stretch;gap:0"><div style="display:flex;align-items:center;gap:12px"><div class="grow">
+      <div class="when num">${when}</div>
+      <div class="what" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
+    </div>${acts}</div>
+      <div class="meta num" style="height:20px">${meta}</div></div>`;
+  const events = today.map(e => ({ ...e }));
+  if (guest) events.push({ s: from[0], e: from[1], t: title, c: col, link: 1 });
+  const lanes = ['priya', 'rahul', 'aman', 'neha'];
+  const lanesH = lanesMode ? lanes.length * 14 : 0;
+  h += `<div class="ribbon ${lanesMode ? '' : 'tall'}" style="${lanesMode ? `height:${40 + lanesH}px` : ''}"><div class="track"></div>`;
+  events.forEach(e => {
+    const moving = e.t === title;
+    h += `<div class="ev ${e.past ? 'past' : ''} ${moving ? 'orig' : ''}" style="--c:${e.c};left:${pct(toMin(e.s))};width:calc(${pct(toMin(e.e) - toMin(e.s) + D0)} - 2px);background:${e.c}"></div>`;
+  });
+  h += `<div class="ev lift" style="left:${pct(toMin(timeTo[0]))};width:calc(${pct(toMin(timeTo[1]) - toMin(timeTo[0]) + D0)} - 2px);background:${col}"></div>`;
+  h += `<div class="now" style="left:${pct(10 * 60 + 18)}"></div>`;
+  if (lanesMode) {
+    lanes.forEach((k, i) => {
+      const c = { priya: '#ff9f0a', rahul: '#5e5ce6', aman: '#30d158', neha: '#ff375f' }[k];
+      h += `<div class="ln2" style="top:${22 + i * 14}px"><span class="nm">${k[0].toUpperCase() + k.slice(1)}</span>${hatchBusy[k].map(([a, b]) => `<div class="busy" style="--c:${c};left:${pct(toMin(a))};width:calc(${pct(toMin(b) - toMin(a) + D0)} - 1px)"></div>`).join('')}</div>`;
+    });
+    h += `<div class="band ${bad ? 'bad' : ''}" style="left:calc(${pct(toMin(timeTo[0]))} - 2px);width:calc(${pct(toMin(timeTo[1]) - toMin(timeTo[0]) + D0)} + 2px);height:${24 + lanesH}px"></div>`;
+    [9, 12, 15, 18].forEach(x => h += `<div class="hr num" style="left:${pct(x * 60)};top:${24 + lanesH}px">${x}</div>`);
+  } else {
+    // everyone-else availability: green where all guests are free, striped where anyone is busy
+    const all = Object.values(hatchBusy).flat().map(([a, b]) => [toMin(a), toMin(b)]).sort((x, y) => x[0] - y[0]);
+    let cur = 10 * 60 + 30, segs = [];
+    for (const [a, b] of all) { if (b <= cur) continue; if (a > cur) segs.push(['f', cur, a]); segs.push(['b', Math.max(a, cur), b]); cur = Math.max(cur, b); }
+    if (cur < D1) segs.push(['f', cur, D1]);
+    h += `<div class="avail">${segs.map(([k, a, b]) => `<i class="${k}" style="left:${pct(a)};width:${pct(b - a + D0)}"></i>`).join('')}</div>`;
+    [9, 12, 15, 18].forEach(x => h += `<div class="hr num" style="left:${pct(x * 60)}">${x}</div>`);
+  }
+  h += `</div><div class="list"><div class="hdr">Later today</div>`;
+  events.filter(e => !e.past && !e.next).sort((a, b) => toMin(a.s) - toMin(b.s)).forEach(e => h += `<div class="row"><span class="bar" style="background:${e.c}"></span><span class="t num">${e.s}</span><span class="title">${e.t}</span>${e.link ? `<span class="cam">${icon('cam', 15)}</span>` : ''}</div>`);
+  h += `</div><div class="foot"><div class="row plus">${icon('plus', 14)}New event<span class="k2" style="color:var(--fg3)">⌘N</span></div><div class="row">${icon('gear', 14)}</div></div>`;
+  p.innerHTML = h;
+  if (!done) {
+    // pointer, held on the lifted block
+    requestAnimationFrame(() => {
+      const lift = p.querySelector('.ev.lift').getBoundingClientRect(), pr = p.getBoundingClientRect();
+      const g = document.createElement('div');
+      g.className = 'grab';
+      g.innerHTML = `<svg width="18" height="22" viewBox="0 0 18 22"><path d="M5 9V4.2a1.4 1.4 0 0 1 2.8 0V9m0-1.2V2.9a1.4 1.4 0 0 1 2.8 0v4.9m0 0V3.9a1.4 1.4 0 0 1 2.8 0v5.5m0-2.4a1.4 1.4 0 0 1 2.8 0v6.3c0 4-2.6 6.9-6.4 6.9-2.6 0-4.1-1.3-5.4-3.5L1.4 12.4a1.4 1.4 0 0 1 2.4-1.5L5 12.4V9" fill="#fff" stroke="#000" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
+      g.style.left = (lift.left - pr.left + lift.width / 2 - 6) + 'px';
+      g.style.top = (lift.top - pr.top + 4) + 'px';
+      p.appendChild(g);
+    });
+  }
+});
+
+document.querySelectorAll('[data-perm]').forEach(p => {
+  const ok = `<svg width="13" height="13"><use href="#check"/></svg>`;
+  p.innerHTML = `<div class="perm">
+    <h3>Give Cue a little more access</h3>
+    <p>Google asks once for everything Cue does. Your current sign-in is missing one of these.</p>
+    <div class="it"><span class="ic ok">${ok}</span><div><b>Read and change your calendar</b><span>Add, edit and move events, and reply to invites.</span></div></div>
+    <div class="it"><span class="ic"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.8 13.5c.5-2.4 2.2-3.7 4.2-3.7s3.7 1.3 4.2 3.7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.6" cy="6.2" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M11.4 9.9c1.6 0 2.8 1.1 3.2 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span><div><b>See your coworkers</b><span>Find anyone at your company by name when you invite or move a meeting.</span></div></div>
+    <div class="bt"><span class="btn-join s">Continue with Google</span><span class="btn-sec s">Not now</span></div>
+  </div>`;
+});
 
 const b = location.hash.slice(1) || 'glance';
 document.getElementById(b).classList.add('on');

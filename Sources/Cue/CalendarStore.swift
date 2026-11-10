@@ -26,11 +26,17 @@ final class CalendarStore: ObservableObject {
     var googleEmail: String? { google.email }
     var canWrite: Bool { demo || (source == .google && google.canWrite) }
     var canCreate: Bool { demo || (source == .google && google.isSignedIn) }
+    var canSeeCoworkers: Bool { demo || (source == .google && google.canSeeCoworkers) }
+    /// A sign-in from before Cue asked for everything up front.
+    var missingAccess: Bool { !demo && source == .google && google.isSignedIn && !(google.canWrite && google.canSeeCoworkers) }
     var writableCalendars: [GCalendar] { googleCalendars.filter(\.writable) }
     var primaryCalendarID: String { googleCalendars.first { $0.primary == true }?.id ?? google.email ?? "primary" }
 
-    /// People you've had meetings with lately, most frequent first. Used for suggestions.
+    /// People you've had meetings with lately, most frequent first, then everyone else in the
+    /// Workspace directory. Used for suggestions and for matching names.
     @Published private(set) var contacts: [Person] = []
+    private var recent: [Person] = [] { didSet { mergeContacts() } }
+    private var coworkers: [Person] = [] { didSet { mergeContacts() } }
     private var contactsFetched = Date.distantPast
     private var freeBusyCache: [String: (at: Date, value: FreeBusy)] = [:]
 
@@ -136,6 +142,7 @@ final class CalendarStore: ObservableObject {
                 googleState = .idle
                 access = .granted
                 lastFetch = .distantPast
+                contactsFetched = .distantPast
                 fetchGoogle()
             } catch GoogleError.cancelled {
                 googleState = .idle
@@ -151,6 +158,8 @@ final class CalendarStore: ObservableObject {
         google.signOut()
         meetings = []
         googleCalendars = []
+        recent = []
+        coworkers = []
         access = .needsGoogle
         objectWillChange.send()
     }
@@ -258,6 +267,53 @@ final class CalendarStore: ObservableObject {
         }
     }
 
+    /// Your own meeting: moves it right away and Google emails the guests.
+    func move(_ m: Meeting, to start: Date) async throws {
+        guard let cal = m.calendarID else { return }
+        let end = start.addingTimeInterval(m.end.timeIntervalSince(m.start))
+        if let i = meetings.firstIndex(where: { $0.key == m.key }) {
+            meetings[i].start = start
+            meetings[i].end = end
+            meetings.sort { ($0.start, $0.end) < ($1.start, $1.end) }
+        }
+        do {
+            try await write {
+                try await GoogleCalendarAPI.patch(calendarID: cal, eventID: m.id, changes: [
+                    "start": GoogleCalendarAPI.time(start), "end": GoogleCalendarAPI.time(end),
+                ], token: $0)
+            }
+        } catch {
+            if let i = meetings.firstIndex(where: { $0.id == m.id && $0.start == start }) {
+                meetings[i].start = m.start
+                meetings[i].end = m.end
+                meetings.sort { ($0.start, $0.end) < ($1.start, $1.end) }
+            }
+            throw error
+        }
+    }
+
+    /// Someone else's meeting: the API has no "propose a new time", so Cue does what that does
+    /// by hand. It replies Maybe with the new time as the note, and Google emails the organiser.
+    func propose(_ m: Meeting, start: Date) async throws {
+        let end = start.addingTimeInterval(m.end.timeIntervalSince(m.start))
+        let day = Calendar.current.isDate(start, inSameDayAs: m.start) ? "" : start.formatted(.dateTime.weekday(.wide)) + " "
+        let note = "Could we move this to \(day)\(Fmt.time(start)) – \(Fmt.time(end))? Proposed from Cue."
+        guard let cal = m.calendarID, m.people.contains(where: \.isSelf) else { return }
+        let people = m.people.map { p -> Person in
+            var p = p
+            if p.isSelf { p.status = "tentative"; p.comment = note }
+            return p
+        }
+        if let i = meetings.firstIndex(where: { $0.key == m.key }) {
+            meetings[i].people = people
+            meetings[i].selfStatus = "tentative"
+        }
+        try await write {
+            try await GoogleCalendarAPI.patch(calendarID: cal, eventID: m.id,
+                                              changes: ["attendees": GoogleCalendarAPI.attendeesBody(people)], token: $0)
+        }
+    }
+
     /// Busy blocks for a day, cached for five minutes so typing doesn't hammer Google.
     func freeBusy(_ ids: [String], day: Date) async -> [String: FreeBusy] {
         let cal = Calendar.current
@@ -298,8 +354,18 @@ final class CalendarStore: ObservableObject {
                     counts[email] = (p, (counts[email]?.1 ?? 0) + 1)
                 }
             }
-            contacts = counts.values.sorted { $0.1 > $1.1 }.map(\.0)
+            recent = counts.values.sorted { $0.1 > $1.1 }.map(\.0)
         }
+        guard google.canSeeCoworkers else { return }
+        Task {
+            // Off when the People API isn't enabled for the OAuth client; recent people still work.
+            if let all = try? await GoogleCalendarAPI.directory(token: token) { coworkers = all }
+        }
+    }
+
+    private func mergeContacts() {
+        var seen = Set(recent.map { $0.email.lowercased() })
+        contacts = recent + coworkers.filter { seen.insert($0.email.lowercased()).inserted }
     }
 
     // MARK: Demo data (matches the mockups)
@@ -312,13 +378,15 @@ final class CalendarStore: ObservableObject {
         }
         if id.hasPrefix("priya") { return FreeBusy(busy: [iv((9, 30), (10, 45)), iv((15, 0), (16, 0)), iv((17, 0), (18, 0))], unavailable: false) }
         if id.hasPrefix("rahul") { return FreeBusy(busy: [iv((10, 30), (10, 45)), iv((11, 0), (12, 0)), iv((13, 30), (14, 0)), iv((16, 30), (17, 30))], unavailable: false) }
+        if id.hasPrefix("aman") { return FreeBusy(busy: [iv((10, 30), (10, 45)), iv((11, 0), (11, 45)), iv((14, 0), (15, 0))], unavailable: false) }
+        if id.hasPrefix("neha") { return FreeBusy(busy: [iv((10, 30), (10, 45)), iv((11, 0), (11, 45)), iv((17, 0), (18, 0))], unavailable: false) }
         return FreeBusy(busy: [iv((10, 30), (10, 45)), iv((15, 0), (16, 0))], unavailable: false)
     }
 
     func loadDemo() {
         demo = true
         source = .google
-        contacts = ["Priya Shah", "Rahul Kumar", "Aman Mehta", "Neha Joshi", "Vikram Tiwari"].map {
+        recent = ["Priya Shah", "Rahul Kumar", "Aman Mehta", "Neha Joshi", "Vikram Tiwari"].map {
             Person(email: $0.lowercased().replacingOccurrences(of: " ", with: ".") + "@browserstack.com", name: $0)
         }
         access = .granted

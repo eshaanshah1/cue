@@ -637,6 +637,11 @@ struct LanesView: View {
 
 struct Hatch: View {
     let color: Color
+    var radius: CGFloat = 4
+    var spacing: CGFloat = 6
+    var line: CGFloat = 2.5
+    var outlined = true
+
     var body: some View {
         Canvas { ctx, size in
             var p = Path()
@@ -644,12 +649,12 @@ struct Hatch: View {
             while x < size.width {
                 p.move(to: CGPoint(x: x, y: size.height))
                 p.addLine(to: CGPoint(x: x + size.height, y: 0))
-                x += 6
+                x += spacing
             }
-            ctx.stroke(p, with: .color(color), lineWidth: 2.5)
+            ctx.stroke(p, with: .color(color), lineWidth: line)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(color, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: radius))
+        .overlay { if outlined { RoundedRectangle(cornerRadius: radius).strokeBorder(color, lineWidth: 1) } }
         .opacity(0.8)
     }
 }

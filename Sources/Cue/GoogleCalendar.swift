@@ -39,7 +39,8 @@ struct GEvent: Decodable {
         let resource: Bool?
         let optional: Bool?
         let organizer: Bool?
-        enum CodingKeys: String, CodingKey { case email, displayName, isSelf = "self", responseStatus, resource, optional, organizer }
+        let comment: String?
+        enum CodingKeys: String, CodingKey { case email, displayName, isSelf = "self", responseStatus, resource, optional, organizer, comment }
     }
     struct Organizer: Decodable {
         let isSelf: Bool?
@@ -72,7 +73,7 @@ struct FreeBusy: Equatable {
 /// Google Calendar REST. Responses are trimmed with `fields` so each poll is a few KB.
 enum GoogleCalendarAPI {
     private static let base = "https://www.googleapis.com/calendar/v3"
-    private static let eventFields = "id,iCalUID,summary,status,eventType,start(dateTime),end(dateTime),hangoutLink,location,description,htmlLink,conferenceData(conferenceId,entryPoints(entryPointType,uri,meetingCode,passcode,password),conferenceSolution(name)),attendees(email,displayName,self,responseStatus,resource,optional,organizer),organizer(self),guestsCanModify"
+    private static let eventFields = "id,iCalUID,summary,status,eventType,start(dateTime),end(dateTime),hangoutLink,location,description,htmlLink,conferenceData(conferenceId,entryPoints(entryPointType,uri,meetingCode,passcode,password),conferenceSolution(name)),attendees(email,displayName,self,responseStatus,resource,optional,organizer,comment),organizer(self),guestsCanModify"
     private static let iso = ISO8601DateFormatter()
 
     static func calendars(token: String) async throws -> [GCalendar] {
@@ -141,6 +142,39 @@ enum GoogleCalendarAPI {
         return out
     }
 
+    /// Everyone in your Google Workspace directory. Needs directory.readonly and the People API.
+    static func directory(token: String) async throws -> [Person] {
+        struct Page: Decodable {
+            struct P: Decodable {
+                struct Name: Decodable { let displayName: String? }
+                struct Email: Decodable { let value: String? }
+                let names: [Name]?
+                let emailAddresses: [Email]?
+            }
+            let people: [P]?
+            let nextPageToken: String?
+        }
+        var out: [Person] = []
+        var pageToken: String?
+        var pages = 0
+        repeat {
+            var c = URLComponents(string: "https://people.googleapis.com/v1/people:listDirectoryPeople")!
+            c.queryItems = [
+                .init(name: "readMask", value: "names,emailAddresses"),
+                .init(name: "sources", value: "DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE"),
+                .init(name: "pageSize", value: "1000"),
+            ] + (pageToken.map { [.init(name: "pageToken", value: $0)] } ?? [])
+            let page: Page = try decode(try await send("GET", c.url!, token: token))
+            for p in page.people ?? [] {
+                guard let email = p.emailAddresses?.first?.value?.lowercased() else { continue }
+                out.append(Person(email: email, name: p.names?.first?.displayName))
+            }
+            pageToken = page.nextPageToken
+            pages += 1
+        } while pageToken != nil && pages < 30
+        return out
+    }
+
     struct Draft {
         var title: String
         var start: Date
@@ -189,6 +223,7 @@ enum GoogleCalendarAPI {
             if let s = p.status { a["responseStatus"] = s }
             if p.optional { a["optional"] = true }
             if let n = p.name { a["displayName"] = n }
+            if let c = p.comment { a["comment"] = c }
             return a
         }
     }
@@ -266,7 +301,7 @@ extension Meeting {
         let people = (e.attendees ?? []).compactMap { a -> Person? in
             guard let email = a.email else { return nil }
             return Person(email: email, name: a.displayName, status: a.responseStatus, isSelf: a.isSelf == true,
-                          organizer: a.organizer == true, optional: a.optional == true, resource: a.resource == true)
+                          organizer: a.organizer == true, optional: a.optional == true, resource: a.resource == true, comment: a.comment)
         }
         let rooms = people.filter { $0.resource && $0.status != "declined" }.map(\.display)
         let organizer = e.organizer?.isSelf == true || e.attendees == nil
